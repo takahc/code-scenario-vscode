@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { ScenarioProvider, ScenarioNode, ItemNode } from "./scenarioProvider";
-import { ItemType } from "./scenarioModel";
+import { ScenarioItemData } from "./scenarioModel";
+import { ItemEditorValues, showItemEditor } from "./itemEditorPanel";
 import { resolveItemLine } from "./symbolResolver";
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -62,43 +63,26 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "code-scenario.addItem",
-      async (node: ScenarioNode | ItemNode) => {
-        const scenarioId =
-          node.kind === "scenario" ? node.data.id : node.scenarioId;
-        const parentItemId =
-          node.kind === "item" ? node.data.id : undefined;
+      async (node?: ScenarioNode | ItemNode) => {
+        const target = await resolveAddTarget(provider, node);
+        if (!target) {
+          return;
+        }
 
-        // Ask for file path
-        const filePath = await vscode.window.showInputBox({
-          prompt: "File path (relative to workspace root)",
-          placeHolder: "src/main.c",
+        const values = await showItemEditor({
+          mode: "add",
+          scenarioName: target.scenarioName,
+          parentItemName: target.parentItemName,
         });
-        if (!filePath || !filePath.trim()) { return; }
+        if (!values) {
+          return;
+        }
 
-        // Ask for symbol name or leave empty for file-level entry
-        const symbolName = await vscode.window.showInputBox({
-          prompt: "Symbol name (leave empty to reference the file itself)",
-          placeHolder: "usb_init",
-        });
-
-        // Ask for type
-        const typeChoice = await vscode.window.showQuickPick(
-          ["definition", "declare", "call", "reference", "codeblock", "file"],
-          { placeHolder: "Select item type" }
+        await provider.addItem(
+          target.scenarioId,
+          target.parentItemId,
+          toScenarioItemData(values)
         );
-        if (!typeChoice) { return; }
-
-        const trimmedSymbol = symbolName ? symbolName.trim() : "";
-        const kind = trimmedSymbol ? "symbol" : "file";
-        const name = kind === "file" ? filePath.trim() : trimmedSymbol;
-
-        await provider.addItem(scenarioId, parentItemId, {
-          name,
-          kind,
-          type: typeChoice as ItemType,
-          filePath: filePath.trim(),
-          line: -1,
-        });
       }
     )
   );
@@ -107,36 +91,25 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "code-scenario.editItem",
       async (node: ItemNode) => {
-        const filePath = await vscode.window.showInputBox({
-          prompt: "File path (relative to workspace root)",
-          value: node.data.filePath,
+        const values = await showItemEditor({
+          mode: "edit",
+          scenarioName: getScenarioName(provider, node.scenarioId),
+          itemName: node.data.name,
+          initialValue: {
+            filePath: node.data.filePath,
+            symbolName: node.data.kind === "symbol" ? node.data.name : "",
+            type: node.data.type,
+          },
         });
-        if (!filePath || !filePath.trim()) { return; }
+        if (!values) {
+          return;
+        }
 
-        const symbolName = await vscode.window.showInputBox({
-          prompt: "Symbol name (leave empty for file-level)",
-          value: node.data.kind === "symbol" ? node.data.name : "",
-        });
-
-        const typeChoice = await vscode.window.showQuickPick(
-          ["definition", "declare", "call", "reference", "codeblock", "file"],
-          {
-            placeHolder: "Select item type",
-          }
+        await provider.editItem(
+          node.scenarioId,
+          node.data.id,
+          toScenarioItemData(values)
         );
-        if (!typeChoice) { return; }
-
-        const trimmedSymbol = symbolName ? symbolName.trim() : "";
-        const kind = trimmedSymbol ? "symbol" : "file";
-        const name = kind === "file" ? filePath.trim() : trimmedSymbol;
-
-        await provider.editItem(node.scenarioId, node.data.id, {
-          name,
-          kind,
-          type: typeChoice as ItemType,
-          filePath: filePath.trim(),
-          line: -1,
-        });
       }
     )
   );
@@ -213,4 +186,85 @@ function getWorkspaceRoot(): string | undefined {
     return folders[0].uri.fsPath;
   }
   return undefined;
+}
+
+function getScenarioName(provider: ScenarioProvider, scenarioId: string): string {
+  return provider.getScenarios().find((scenario) => scenario.id === scenarioId)?.name ?? "Scenario";
+}
+
+async function resolveAddTarget(
+  provider: ScenarioProvider,
+  node?: ScenarioNode | ItemNode
+): Promise<{
+  scenarioId: string;
+  scenarioName: string;
+  parentItemId?: string;
+  parentItemName?: string;
+} | undefined> {
+  if (node) {
+    if (node.kind === "scenario") {
+      return {
+        scenarioId: node.data.id,
+        scenarioName: node.data.name,
+      };
+    }
+
+    return {
+      scenarioId: node.scenarioId,
+      scenarioName: getScenarioName(provider, node.scenarioId),
+      parentItemId: node.data.id,
+      parentItemName: node.data.name,
+    };
+  }
+
+  const scenarios = provider.getScenarios();
+  if (scenarios.length === 0) {
+    await vscode.window.showInformationMessage(
+      "Create a scenario before adding items."
+    );
+    return undefined;
+  }
+
+  if (scenarios.length === 1) {
+    return {
+      scenarioId: scenarios[0].id,
+      scenarioName: scenarios[0].name,
+    };
+  }
+
+  const selectedScenario = await vscode.window.showQuickPick(
+    scenarios.map((scenario) => ({
+      label: scenario.name,
+      description: `${scenario.items.length} item${scenario.items.length === 1 ? "" : "s"}`,
+      scenario,
+    })),
+    {
+      placeHolder: "Select a scenario for the new item",
+    }
+  );
+
+  if (!selectedScenario) {
+    return undefined;
+  }
+
+  return {
+    scenarioId: selectedScenario.scenario.id,
+    scenarioName: selectedScenario.scenario.name,
+  };
+}
+
+function toScenarioItemData(
+  values: ItemEditorValues
+): Omit<ScenarioItemData, "id" | "children"> {
+  const filePath = values.filePath.trim();
+  const symbolName = values.symbolName.trim();
+  const kind = symbolName ? "symbol" : "file";
+
+  return {
+    name: kind === "symbol" ? symbolName : filePath,
+    kind,
+    type: values.type,
+    filePath,
+    line: -1,
+  };
 }
