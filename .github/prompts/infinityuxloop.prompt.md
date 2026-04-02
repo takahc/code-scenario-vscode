@@ -15,21 +15,22 @@ Interpret `infinityuxloop` as: repeatedly seek UX improvements from `idea-man`, 
    - prefer smaller code change size
    - prefer higher user impact
    - do not ignore high-difficulty ideas; keep them visible as future candidates when their value is high
-3. Choose the best next item.
-4. Use `implementer` to build it.
-5. Use `checker` to verify it.
-6. If needed, use `descriptioner` for release-note or announcement wording.
-7. Check the current branch before any commit or push.
-8. If the branch is not `main` or `develop`, create or update the matching progress record, commit in the smallest correct logical unit, and push.
-9. When the implemented unit is feature-complete, follow the repository pre-release flow and publish a pre-release.
-10. Reassess and continue with the next UX improvement if another concrete iteration is available.
+3. Check whether the current branch is suitable for the selected work and, if needed, create a task-aligned working branch from `pre-release`.
+4. Choose the best next item.
+5. Use `implementer` to build it.
+6. Use `checker` to verify it.
+7. If needed, use `descriptioner` for release-note or announcement wording.
+8. Check the current branch before any commit or push.
+9. If the branch is not `main`, `develop`, or `pre-release`, create or update the matching progress record, commit in the smallest correct logical unit, and push.
+10. When the implemented unit is feature-complete, follow the repository pre-release flow and publish a pre-release.
+11. Reassess and continue with the next UX improvement if another concrete iteration is available.
 
 ## Commit and Push Rules
 - Follow repository commit rules.
 - Use conventional commit messages.
 - Include the matching progress file in each commit.
 - Split commits when separate UX improvements or support changes can stand alone.
-- If the current branch is `main` or `develop`, stop before commit and push, and report that a working branch is required.
+- If the current branch is `main`, `develop`, or `pre-release`, stop implementation work and create a task-aligned working branch from `pre-release` first.
 
 ## Pre-release Rule
 - If a feature reaches a releasable state, the PM must follow `.github/skills/pre-release/SKILL.md` and execute the pre-release publication flow.
@@ -46,6 +47,7 @@ Interpret `infinityuxloop` as: repeatedly seek UX improvements from `idea-man`, 
 ## Required behavior
 - Keep high-difficulty but valuable ideas visible in the report.
 - Keep progress notes current when plan, implementation state, or verification status changes.
+- Check branch suitability before implementation and report the branch creation or switch decision.
 - If a feature is done, do not stop before handling pre-release unless a repository rule or blocker prevents it.
 - Return the final stop condition explicitly.
 - Summarize what was ideated, selected, implemented, verified, committed, and pushed in this loop.
@@ -54,6 +56,7 @@ Interpret `infinityuxloop` as: repeatedly seek UX improvements from `idea-man`, 
 - Goal
 - UX ideas considered
 - Prioritization decision
+- Branch action
 - Actions completed in this loop
 - Progress file created or updated
 - Commits and push status

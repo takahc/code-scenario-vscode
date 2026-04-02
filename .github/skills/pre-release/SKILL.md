@@ -31,6 +31,7 @@ user-invocable: true
 
 2. Confirm branch strategy.
 	- Identify the source branch or commits that should go into the pre-release.
+	- Confirm the source branch was cut from `pre-release`, or verify that its diff against `pre-release` is intentionally limited to the feature being released.
 	- Confirm the target branch is `pre-release`.
 	- If the current branch is already `pre-release`, verify whether a merge is still needed or whether the user intends to push existing commits.
 	- If the working tree is not clean, commit the pending changes first by following [commit](../commit/SKILL.md), then continue with the pre-release merge flow.
@@ -61,6 +62,7 @@ user-invocable: true
 ### Merge now or stop first
 
 - Proceed when the source branch is ready and the working tree is clean, or after the pending work has been committed.
+- Prefer source branches that were created from `pre-release` so the preview release branch stays the baseline for new work.
 - Stop when validation is failing, merge conflicts are unresolved, or the user has not identified what should be included in the pre-release.
 
 ### What to do when the tree is dirty

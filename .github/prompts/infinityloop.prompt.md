@@ -9,6 +9,7 @@ Run the PM in continuous orchestration mode.
 Interpret `infinityloop` as: keep choosing and executing the next best concrete action until one of the PM stop conditions is reached.
 
 ## Loop Rule
+- Before implementation, check whether the current branch is appropriate and create a task-aligned working branch from `pre-release` if needed.
 - After each result, reassess the state and decide the next action.
 - Continue delegating to the appropriate specialist or updating progress as needed.
 - Do not stop after a single step if another concrete step is available in the same turn.
@@ -22,6 +23,7 @@ Interpret `infinityloop` as: keep choosing and executing the next best concrete 
 ## Required behavior
 - Keep progress notes current when the plan or execution state changes.
 - Prefer the narrowest specialist for each step.
+- Do implementation work on a task-aligned branch that was cut from `pre-release`, not directly on `pre-release`.
 - If a feature becomes releasable during the loop, follow the repository pre-release flow and publish a pre-release before stopping.
 - Return the final stop condition explicitly.
 - Summarize what was completed during the loop.
@@ -29,6 +31,7 @@ Interpret `infinityloop` as: keep choosing and executing the next best concrete 
 ## Output
 - Goal
 - Actions completed in this loop
+- Branch action
 - Progress file created or updated
 - Pre-release action
 - Final stop condition
