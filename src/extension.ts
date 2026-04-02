@@ -149,7 +149,14 @@ export function activate(context: vscode.ExtensionContext): void {
           "Delete"
         );
         if (confirm === "Delete") {
-          await provider.deleteScenario(node.data.id);
+          const undoToken = await provider.deleteScenario(node.data.id);
+          if (undoToken) {
+            void showDeleteUndoNotification(
+              provider,
+              `Deleted scenario "${node.data.name}".`,
+              undoToken
+            );
+          }
         }
       }
     )
@@ -520,7 +527,14 @@ export function activate(context: vscode.ExtensionContext): void {
           "Delete"
         );
         if (confirm === "Delete") {
-          await provider.deleteItem(node.scenarioId, node.data.id);
+          const undoToken = await provider.deleteItem(node.scenarioId, node.data.id);
+          if (undoToken) {
+            void showDeleteUndoNotification(
+              provider,
+              `Deleted item "${node.data.name}".`,
+              undoToken
+            );
+          }
         }
       }
     )
@@ -1136,5 +1150,21 @@ async function revealItemNode(
     });
   } catch {
     // reveal can throw if the view is not visible; swallow silently
+  }
+}
+
+async function showDeleteUndoNotification(
+  provider: ScenarioProvider,
+  message: string,
+  undoToken: string
+): Promise<void> {
+  const action = await vscode.window.showInformationMessage(message, "Undo");
+  if (action !== "Undo") {
+    return;
+  }
+
+  const result = await provider.undoDelete(undoToken);
+  if (!result.ok) {
+    await vscode.window.showWarningMessage(result.reason);
   }
 }

@@ -41,6 +41,21 @@ Hover over any row in the Code Scenario sidebar to reveal action buttons directl
 
 All of these actions remain available in the right-click context menu as well.
 
+## Delete Undo
+
+After you confirm **Delete Scenario** or **Delete Item**, the extension shows a temporary
+notification with an **Undo** action.
+
+- Undo restores only the **most recently deleted** scenario or item.
+- The restored entry returns to its original parent and order position when that exact restore is
+  still possible.
+- Deleting a scenario and undoing it also restores the **Quick Add** target state if that scenario
+  had been selected as the current target.
+- Undo is session-only: it does not survive a window reload or restart.
+
+If the original parent or surrounding order has changed in a way that makes exact restoration
+ambiguous, Undo is rejected with a warning instead of restoring to a guessed location.
+
 ## Keyboard Shortcuts
 
 The extension contributes the following default keyboard shortcuts for the most common workflows.
