@@ -74,6 +74,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "code-scenario.renameItem",
       async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Rename Item is only available from an item context menu."
+          );
+          return;
+        }
         const newName = await vscode.window.showInputBox({
           prompt: "Enter new item name",
           value: node.data.name,
@@ -195,6 +201,46 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "code-scenario.editItem",
       async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Edit Item is only available from an item context menu."
+          );
+          return;
+        }
+        const values = await showItemEditor({
+          mode: "edit",
+          scenarioName: getScenarioName(provider, node.scenarioId),
+          itemName: node.data.name,
+          initialValue: {
+            filePath: node.data.filePath,
+            symbolName: node.data.kind === "symbol" ? node.data.name : "",
+            type: node.data.type,
+            workspaceFolderUri: node.data.workspaceFolderUri,
+          },
+        });
+        if (!values) {
+          return;
+        }
+
+        await provider.editItem(
+          node.scenarioId,
+          node.data.id,
+          toScenarioItemUpdates(values)
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.relinkItem",
+      async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Relink Item is only available from an item context menu."
+          );
+          return;
+        }
         const values = await showItemEditor({
           mode: "edit",
           scenarioName: getScenarioName(provider, node.scenarioId),
@@ -253,6 +299,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "code-scenario.deleteItem",
       async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Delete Item is only available from an item context menu."
+          );
+          return;
+        }
         const confirm = await vscode.window.showWarningMessage(
           `Delete item "${node.data.name}"?`,
           { modal: true },
@@ -277,6 +329,12 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "code-scenario.openItem",
       async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Open Item is only available from an item context menu."
+          );
+          return;
+        }
         const location = resolveScenarioItemLocation(node.data);
         if (location.status === "missing") {
           await showOpenItemWarning(
@@ -467,9 +525,9 @@ async function showOpenItemWarning(
   node: ItemNode,
   message: string
 ): Promise<void> {
-  const action = await vscode.window.showWarningMessage(message, "Edit Item");
-  if (action === "Edit Item") {
-    await vscode.commands.executeCommand("code-scenario.editItem", node);
+  const action = await vscode.window.showWarningMessage(message, "Relink Item");
+  if (action === "Relink Item") {
+    await vscode.commands.executeCommand("code-scenario.relinkItem", node);
   }
 }
 

@@ -293,7 +293,7 @@ export class ScenarioProvider
           ? vscode.TreeItemCollapsibleState.Collapsed
           : vscode.TreeItemCollapsibleState.None
       );
-      item.contextValue = "scenarioItem";
+      item.contextValue = shouldUseWarningStyling(location) ? "scenarioItemStale" : "scenarioItem";
       item.description = hasChildren
         ? `${node.data.filePath} · ${formatCount(node.data.children.length, "child")}`
         : node.data.filePath;
@@ -481,5 +481,9 @@ function shouldUseWarningStyling(location: ScenarioItemLocationResolution): bool
     return false;
   }
 
-  return location.status === "ambiguous" || location.reason === "fileMissing";
+  return (
+    location.status === "ambiguous" ||
+    location.reason === "fileMissing" ||
+    location.reason === "workspaceFolderMissing"
+  );
 }
