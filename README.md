@@ -91,6 +91,7 @@ feature.
 
 - The status bar item appears whenever the workspace has at least one scenario.
 - If a Quick Add target is saved, the item shows that scenario name.
+- If exactly one scenario exists and no target is saved yet, the item shows that scenario name with `(auto)` — it will be used automatically without prompting.
 - If multiple scenarios exist and no target is saved yet, the item prompts you to select one.
 - Click the item to set, change, or clear the saved Quick Add target without leaving the editor.
 
