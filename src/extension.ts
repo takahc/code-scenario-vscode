@@ -153,12 +153,19 @@ export function activate(context: vscode.ExtensionContext): void {
           : path.join(workspaceRoot, node.data.filePath);
 
         const uri = vscode.Uri.file(absolutePath);
+        if (!(await fileExists(uri))) {
+          await showOpenItemRecoveryMessage(
+            `Could not open "${node.data.name}" because the target file was not found: ${node.data.filePath}`,
+            node
+          );
+          return;
+        }
 
-        // Resolve line number
-        const line = await resolveItemLine(node.data, workspaceRoot);
+        const resolved = await resolveItemLine(node.data, workspaceRoot);
 
-        // Update cached line
-        await provider.editItem(node.scenarioId, node.data.id, { line });
+        if (!resolved.usedFallback) {
+          await provider.editItem(node.scenarioId, node.data.id, { line: resolved.line });
+        }
 
         const document = await vscode.workspace.openTextDocument(uri);
         const editor = await vscode.window.showTextDocument(document, {
@@ -166,13 +173,22 @@ export function activate(context: vscode.ExtensionContext): void {
           preserveFocus: false,
         });
 
-        // Move cursor to the resolved line
-        const position = new vscode.Position(Math.max(0, line), 0);
+        const position = new vscode.Position(Math.max(0, resolved.line), 0);
         editor.selection = new vscode.Selection(position, position);
         editor.revealRange(
           new vscode.Range(position, position),
           vscode.TextEditorRevealType.InCenter
         );
+
+        if (node.data.kind === "symbol" && resolved.usedFallback) {
+          const fallbackLabel = resolved.fallbackSource === "cached"
+            ? "a cached line"
+            : "the default location";
+          await showOpenItemRecoveryMessage(
+            `Symbol "${node.data.name}" was not found in ${node.data.filePath}. Opened ${fallbackLabel} instead.`,
+            node
+          );
+        }
       }
     )
   );
@@ -267,4 +283,23 @@ function toScenarioItemData(
     filePath,
     line: -1,
   };
+}
+
+async function fileExists(uri: vscode.Uri): Promise<boolean> {
+  try {
+    await vscode.workspace.fs.stat(uri);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function showOpenItemRecoveryMessage(
+  message: string,
+  node: ItemNode
+): Promise<void> {
+  const action = await vscode.window.showWarningMessage(message, "Edit Item");
+  if (action === "Edit Item") {
+    await vscode.commands.executeCommand("code-scenario.editItem", node);
+  }
 }

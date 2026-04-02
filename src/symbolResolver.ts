@@ -2,17 +2,21 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { ScenarioItemData } from "./scenarioModel";
 
-/**
- * Resolves the line number of a scenario item in its file.
- * For file-kind items, returns line 0.
- * For symbol-kind items, uses VS Code's document symbol provider.
- */
+export interface ResolvedItemLine {
+  line: number;
+  usedFallback: boolean;
+  fallbackSource?: "cached" | "default";
+}
+
 export async function resolveItemLine(
   item: ScenarioItemData,
   workspaceRoot: string
-): Promise<number> {
+): Promise<ResolvedItemLine> {
   if (item.kind === "file") {
-    return 0;
+    return {
+      line: 0,
+      usedFallback: false,
+    };
   }
 
   const absolutePath = path.isAbsolute(item.filePath)
@@ -28,18 +32,21 @@ export async function resolveItemLine(
     );
 
     if (!symbols) {
-      return item.line >= 0 ? item.line : 0;
+      return createFallbackResult(item);
     }
 
     const found = findSymbol(symbols, item.name);
     if (found !== undefined) {
-      return found;
+      return {
+        line: found,
+        usedFallback: false,
+      };
     }
   } catch {
-    // Fallback to cached line
+    return createFallbackResult(item);
   }
 
-  return item.line >= 0 ? item.line : 0;
+  return createFallbackResult(item);
 }
 
 function findSymbol(
@@ -58,4 +65,20 @@ function findSymbol(
     }
   }
   return undefined;
+}
+
+function createFallbackResult(item: ScenarioItemData): ResolvedItemLine {
+  if (item.line >= 0) {
+    return {
+      line: item.line,
+      usedFallback: true,
+      fallbackSource: "cached",
+    };
+  }
+
+  return {
+    line: 0,
+    usedFallback: true,
+    fallbackSource: "default",
+  };
 }
