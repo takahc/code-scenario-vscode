@@ -750,7 +750,7 @@ export function activate(context: vscode.ExtensionContext): void {
           })),
           {
             title: "Find Scenario Item",
-            placeHolder: "Type an item label, scenario name, or file path",
+            placeHolder: "Type an item name, scenario name, or file path",
             matchOnDescription: true,
             matchOnDetail: true,
           }
