@@ -22,12 +22,15 @@ Quick Add 系 3 導線で同一 scenario 内の重複追加を事前に検知し
 - implementer が `src/extension.ts` に `checkQuickAddDuplicate` / `findDuplicatesInScenario` / `collectDuplicateItems` を追加し、3 導線それぞれに重複チェックを組み込んだ。README に Duplicate-Add Guard セクションを追加した。
 - checker が 10 個の受け入れ条件をすべて満たすこと、重複検知が target scenario に限定されていること、Reveal / Add anyway / dismiss の分岐が期待どおりであることを確認し、release blocker なしと報告した。
 - 検証結果として `npm run compile` は成功し、`npm run lint` は既存の ESLint 設定ファイル不在による baseline failure のままだと再確認した。
+- 変更一式を progress と合わせて `feat: guard quick add duplicates` (`741ab88`) として commit し、`origin/feature/quick-add-dedup` へ push した。
+- 未追跡の `scripts/` を避けるため一時 worktree で `origin/pre-release` に `origin/feature/quick-add-dedup` を `merge: feature/quick-add-dedup into pre-release` (`172ccbb`) として取り込み、push した。
+- `Publish Extension` workflow (run `23920818104`) が成功し、`Publish pre-release extension` step まで完了して version `0.1.33` の preview 公開が走った。
 
 ## Uncompleted
-- 変更の commit / push / pre-release 公開。
+(なし)
 
 ## Cautions
 作業ツリーには未追跡の `scripts/` ディレクトリが存在するため、今回の commit 対象へ含めないよう注意が必要。重複検知は target scenario のみに限定しないと、意図的に別 scenario へ同じ file を置く workflow を壊す。symbol 重複の判定は file path と symbol 名の両方を使い、別 file の同名 symbol を誤検知しないようにする必要がある。
 
 ## Next Steps
-progress を含めて変更一式を適切な commit にまとめ、`pre-release` へ反映して preview publish workflow の完了まで確認する。
+必要に応じて Marketplace 上の preview 反映を確認し、次の Infinity UX loop 候補の選定へ進む。
