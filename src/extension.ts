@@ -1807,6 +1807,15 @@ async function stepWalkthrough(
 
   if (flatItems.length === 0) {
     const scenario = provider.getScenarioById(scenarioId);
+    if (currentPosition) {
+      setPosition(undefined);
+      await vscode.window.showInformationMessage(
+        `Scenario "${scenario!.name}" has no items to walk through anymore. ` +
+        "Invoke the command again to choose another scenario."
+      );
+      return;
+    }
+
     await vscode.window.showInformationMessage(
       `Scenario "${scenario!.name}" has no items to walk through.`
     );
