@@ -47,6 +47,23 @@
       { "command": "code-scenario.deleteItem", "title": "Delete Item" },
       { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" }
     ],
+    "keybindings": [
+      {
+        "command": "code-scenario.quickAddCurrentFile",
+        "key": "ctrl+shift+alt+a",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "code-scenario.quickAddSelectionSymbol",
+        "key": "ctrl+shift+alt+s",
+        "when": "editorTextFocus && editorHasSelection"
+      },
+      {
+        "command": "code-scenario.addScenario",
+        "key": "ctrl+shift+alt+n",
+        "when": "focusedView == codeScenarioView"
+      }
+    ],
     "menus": {
       "view/title": [
         {
