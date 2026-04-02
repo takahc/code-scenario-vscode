@@ -23,6 +23,8 @@ export interface ScenarioItemData {
   workspaceFolderUri?: string;
   /** Cached line number (0-based), -1 if not yet resolved */
   line: number;
+  /** Optional free-text note attached to this item */
+  note?: string;
   /** Child items */
   children: ScenarioItemData[];
 }

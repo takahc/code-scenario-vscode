@@ -12,6 +12,7 @@ export interface ItemEditorValues {
   symbolName: string;
   type: ItemType;
   workspaceFolderUri?: string;
+  note?: string;
 }
 
 interface ItemEditorOptions {
@@ -183,6 +184,7 @@ function buildInitialValues(
         : "definition"
       : "file",
     workspaceFolderUri: initialValue?.workspaceFolderUri ?? defaults.workspaceFolderUri,
+    note: initialValue?.note ?? "",
   };
 }
 
@@ -245,6 +247,7 @@ function validateValues(
       symbolName,
       type: values.type,
       workspaceFolderUri: validatedFile.workspaceFolderUri,
+      note: values.note,
     },
   };
 }
@@ -363,7 +366,8 @@ function getWebviewHtml(
     }
 
     input,
-    select {
+    select,
+    textarea {
       width: 100%;
       min-height: 40px;
       padding: 10px 12px;
@@ -372,6 +376,11 @@ function getWebviewHtml(
       font: inherit;
       color: var(--text);
       background: var(--vscode-input-background);
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
     }
 
     .hint {
@@ -453,6 +462,12 @@ function getWebviewHtml(
         <div class="hint" id="typeHint"></div>
       </div>
 
+      <div class="field">
+        <label for="itemNote">Notes</label>
+        <textarea id="itemNote" name="itemNote" rows="3" placeholder="Optional notes about this item...">${escapeHtml(initialValue.note ?? "")}</textarea>
+        <div class="hint">Optional. Notes appear in the item tooltip on hover.</div>
+      </div>
+
       <div class="error" id="errorText"></div>
 
       <div class="actions">
@@ -470,6 +485,7 @@ function getWebviewHtml(
     const filePathInput = document.getElementById("filePath");
     const symbolNameInput = document.getElementById("symbolName");
     const itemTypeSelect = document.getElementById("itemType");
+    const itemNoteTextarea = document.getElementById("itemNote");
     const errorText = document.getElementById("errorText");
     const intentText = document.getElementById("intentText");
     const fileHint = document.getElementById("fileHint");
@@ -482,6 +498,7 @@ function getWebviewHtml(
     filePathInput.value = initialValue.filePath;
     symbolNameInput.value = initialValue.symbolName;
     itemTypeSelect.value = initialValue.type;
+    itemNoteTextarea.value = initialValue.note || "";
 
     function clearError() {
       errorText.textContent = "";
@@ -596,6 +613,7 @@ function getWebviewHtml(
           symbolName: symbolNameInput.value,
           type: itemTypeSelect.value,
           workspaceFolderUri,
+          note: itemNoteTextarea.value,
         },
       });
     });
@@ -617,6 +635,9 @@ function getWebviewHtml(
         }
         if (typeof message.value.type === "string") {
           itemTypeSelect.value = message.value.type;
+        }
+        if (typeof message.value.note === "string") {
+          itemNoteTextarea.value = message.value.note;
         }
         if ("workspaceFolderUri" in message.value) {
           workspaceFolderUri = typeof message.value.workspaceFolderUri === "string"

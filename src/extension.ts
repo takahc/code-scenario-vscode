@@ -314,6 +314,7 @@ export function activate(context: vscode.ExtensionContext): void {
             symbolName: node.data.kind === "symbol" ? node.data.name : "",
             type: node.data.type,
             workspaceFolderUri: node.data.workspaceFolderUri,
+            note: node.data.note,
           },
         });
         if (!values) {
@@ -348,6 +349,7 @@ export function activate(context: vscode.ExtensionContext): void {
             symbolName: node.data.kind === "symbol" ? node.data.name : "",
             type: node.data.type,
             workspaceFolderUri: node.data.workspaceFolderUri,
+            note: node.data.note,
           },
         });
         if (!values) {
@@ -786,7 +788,8 @@ function toScenarioItemData(
 ): Omit<ScenarioItemData, "id" | "children"> {
   const filePath = values.filePath.trim();
   const symbolName = values.symbolName.trim();
-  return createQuickItemData({
+  const note = values.note?.trim() || undefined;
+  const base = createQuickItemData({
     kind: symbolName ? "symbol" : "file",
     type: values.type,
     filePath,
@@ -797,14 +800,17 @@ function toScenarioItemData(
       : {}),
     ...(symbolName ? { name: symbolName } : {}),
   });
+  return note !== undefined ? { ...base, note } : base;
 }
 
 function toScenarioItemUpdates(
   values: ItemEditorValues
 ): Partial<Omit<ScenarioItemData, "id" | "children">> {
+  const note = values.note?.trim() || undefined;
   return {
     ...toScenarioItemData(values),
     workspaceFolderUri: values.workspaceFolderUri,
+    note, // explicitly included (possibly undefined) so editItem can clear a removed note
   };
 }
 
