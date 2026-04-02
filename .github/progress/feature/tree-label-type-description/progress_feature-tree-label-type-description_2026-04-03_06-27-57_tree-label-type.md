@@ -22,13 +22,15 @@ item 名をラベルの主役に戻しつつ、type 情報は失わず descripti
 - checker が受け入れ条件を確認し、label / description の責務分離、children count 維持、tooltip / icon / command / model 未変更を確認した。
 - checker 指摘の軽微な UI 文言差分として、Find Scenario Item Quick Pick の placeholder が旧表現 `item label` のままだったため、PM 判断で `item name` へ 1 行修正した。
 - `npm run compile` は成功し、`npm run lint` は既存どおり ESLint 設定ファイル不在の baseline failure のままだと再確認した。
+- 変更一式を progress と合わせて `feat: simplify tree item labels` (`8267fab`) として commit し、`origin/feature/tree-label-type-description` へ push した。
+- detached worktree で `feature/tree-label-type-description` を `pre-release` へ merge し、`origin/pre-release` の merge commit `b222874` を push した。
+- `Publish Extension` workflow (run `23923106903`) が成功し、`Publish pre-release extension` step まで完了して version `0.1.37` の preview 公開が走った。
 
 ## Uncompleted
-- commit 作成。
-- pre-release への反映と preview 公開。
+(なし)
 
 ## Cautions
 type 情報を完全に消すのではなく、item 種別の判別に必要な情報は description や icon で維持することが重要。file item にまで `file ·` を足すとノイズが増えるため、今回は symbol item のみ description へ type を出す方針にしている。作業ツリーには未追跡の `scripts/` ディレクトリがあるため commit 対象へ含めない。なお、`npm run lint` は今回の変更とは無関係に ESLint 設定ファイル不在で失敗する状態が続いている。
 
 ## Next Steps
-変更一式と progress を同じ論理単位で commit し、pre-release フローで preview 公開まで進める。
+次の Infinity UX loop 候補として `quick-note-from-tree`、`find-reveal-keybindings`、`scenario-health-in-pickers` を比較し、次の preview 単位を選定する。
