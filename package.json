@@ -43,6 +43,7 @@
       { "command": "code-scenario.renameItem", "title": "Rename Item" },
       { "command": "code-scenario.moveItem", "title": "Move Item..." },
       { "command": "code-scenario.editItem", "title": "Edit Item" },
+      { "command": "code-scenario.relinkItem", "title": "Relink Item" },
       { "command": "code-scenario.deleteItem", "title": "Delete Item" },
       { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" }
     ],
@@ -77,32 +78,37 @@
         },
         {
           "command": "code-scenario.addItem",
-          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioItem)",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioItem || viewItem == scenarioItemStale)",
           "group": "inline"
         },
         {
           "command": "code-scenario.openItem",
-          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "group": "inline"
+        },
+        {
+          "command": "code-scenario.relinkItem",
+          "when": "view == codeScenarioView && viewItem == scenarioItemStale",
           "group": "inline"
         },
         {
           "command": "code-scenario.renameItem",
-          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
           "group": "1_modify"
         },
         {
           "command": "code-scenario.editItem",
-          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
           "group": "1_modify"
         },
         {
           "command": "code-scenario.moveItem",
-          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
           "group": "1_modify"
         },
         {
           "command": "code-scenario.deleteItem",
-          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
           "group": "1_modify"
         }
       ],
@@ -125,6 +131,10 @@
         },
         {
           "command": "code-scenario.moveItem",
+          "when": "false"
+        },
+        {
+          "command": "code-scenario.relinkItem",
           "when": "false"
         }
       ]
