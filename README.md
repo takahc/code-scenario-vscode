@@ -46,6 +46,11 @@ All bindings use the `Ctrl+Shift+Alt` chord prefix to avoid conflicts with VS Co
 > specific symbol. Create a new scenario at any time by focusing the Code Scenario sidebar and
 > pressing `Ctrl+Shift+Alt+N`.
 
+When your workspace has multiple scenarios, the first editor-driven Quick Add pick becomes the
+workspace default for later **Quick Add Current File to Scenario** and **Quick Add Selected Symbol
+to Scenario** actions. You can change that default any time from the Command Palette with
+**Set Quick Add Scenario**.
+
 All shortcuts can be remapped via **File → Preferences → Keyboard Shortcuts** (search for
 `code-scenario`).
 
