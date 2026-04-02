@@ -144,15 +144,21 @@ export class ScenarioProvider
 
   getTreeItem(node: TreeNode): vscode.TreeItem {
     if (node.kind === "scenario") {
+      const totalItemCount = countScenarioItems(node.data);
+      const topLevelItemCount = node.data.items.length;
+      const hasChildren = topLevelItemCount > 0;
       const item = new vscode.TreeItem(
         node.data.name,
-        node.data.items.length > 0
-          ? vscode.TreeItemCollapsibleState.Expanded
-          : vscode.TreeItemCollapsibleState.Collapsed
+        hasChildren
+          ? vscode.TreeItemCollapsibleState.Collapsed
+          : vscode.TreeItemCollapsibleState.None
       );
       item.contextValue = "scenario";
       item.iconPath = new vscode.ThemeIcon("list-unordered");
-      item.tooltip = node.data.name;
+      item.description = formatCount(totalItemCount, "item");
+      item.tooltip = hasChildren
+        ? `${node.data.name}\n${formatCount(totalItemCount, "total item")} across ${formatCount(topLevelItemCount, "top-level item")}`
+        : `${node.data.name}\nNo items yet`;
       return item;
     } else {
       const label = `${node.data.name}  |  ${node.data.type}`;
@@ -160,12 +166,16 @@ export class ScenarioProvider
       const item = new vscode.TreeItem(
         label,
         hasChildren
-          ? vscode.TreeItemCollapsibleState.Expanded
+          ? vscode.TreeItemCollapsibleState.Collapsed
           : vscode.TreeItemCollapsibleState.None
       );
       item.contextValue = "scenarioItem";
-      item.description = node.data.filePath;
-      item.tooltip = `${node.data.name} (${node.data.type})\n${node.data.filePath}`;
+      item.description = hasChildren
+        ? `${node.data.filePath} · ${formatCount(node.data.children.length, "child")}`
+        : node.data.filePath;
+      item.tooltip = hasChildren
+        ? `${node.data.name} (${node.data.type})\n${node.data.filePath}\n${formatCount(node.data.children.length, "child")}`
+        : `${node.data.name} (${node.data.type})\n${node.data.filePath}`;
       item.iconPath = node.data.kind === "file"
         ? new vscode.ThemeIcon("file")
         : new vscode.ThemeIcon("symbol-function");
@@ -220,4 +230,19 @@ function removeItemById(
   return items
     .filter((i) => i.id !== id)
     .map((i) => ({ ...i, children: removeItemById(i.children, id) }));
+}
+
+function countScenarioItems(scenario: ScenarioData): number {
+  return countNestedItems(scenario.items);
+}
+
+function countNestedItems(items: ScenarioItemData[]): number {
+  return items.reduce(
+    (total, item) => total + 1 + countNestedItems(item.children),
+    0
+  );
+}
+
+function formatCount(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
