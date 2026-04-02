@@ -245,15 +245,10 @@ export class ScenarioProvider
     parentItemId: string | undefined,
     itemData: Omit<ScenarioItemData, "id" | "children">
   ): Promise<string | undefined> {
-    const item: ScenarioItemData = {
-      ...itemData,
-      id: generateId(),
-      children: [],
-    };
-
     const scenario = this.scenarios.find((s) => s.id === parentScenarioId);
     if (!scenario) { return undefined; }
 
+    const item = createScenarioItem(itemData);
     if (parentItemId) {
       const parent = findItemById(scenario.items, parentItemId);
       if (!parent) { return undefined; }
@@ -261,6 +256,35 @@ export class ScenarioProvider
     } else {
       scenario.items.push(item);
     }
+
+    await this.save();
+    this.refresh();
+    return item.id;
+  }
+
+  async addItemBelow(
+    scenarioId: string,
+    targetItemId: string,
+    itemData: Omit<ScenarioItemData, "id" | "children">
+  ): Promise<string | undefined> {
+    const scenario = this.scenarios.find((entry) => entry.id === scenarioId);
+    if (!scenario) {
+      return undefined;
+    }
+
+    const targetEntry = findItemEntry(scenario.items, targetItemId);
+    if (!targetEntry) {
+      return undefined;
+    }
+
+    const siblings = targetEntry.parent ? targetEntry.parent.children : scenario.items;
+    const targetIndex = siblings.findIndex((item) => item.id === targetItemId);
+    if (targetIndex === -1) {
+      return undefined;
+    }
+
+    const item = createScenarioItem(itemData);
+    siblings.splice(targetIndex + 1, 0, item);
 
     await this.save();
     this.refresh();
@@ -863,6 +887,16 @@ export class ScenarioProvider
 
 function generateId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function createScenarioItem(
+  itemData: Omit<ScenarioItemData, "id" | "children">
+): ScenarioItemData {
+  return {
+    ...itemData,
+    id: generateId(),
+    children: [],
+  };
 }
 
 function findItemById(

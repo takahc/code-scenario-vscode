@@ -19,6 +19,7 @@ interface ItemEditorOptions {
   mode: "add" | "edit";
   scenarioName: string;
   parentItemName?: string;
+  addLocationLabel?: string;
   itemName?: string;
   initialValue?: Partial<ItemEditorValues>;
 }
@@ -327,7 +328,9 @@ function getWebviewHtml(
   const nonce = getNonce();
   const title = options.mode === "add" ? "Add Scenario Item" : "Edit Scenario Item";
   const subtitle = options.mode === "add"
-    ? options.parentItemName
+    ? options.addLocationLabel
+      ? `Scenario: ${options.scenarioName} / ${options.addLocationLabel}`
+      : options.parentItemName
       ? `Scenario: ${options.scenarioName} / Parent: ${options.parentItemName}`
       : `Scenario: ${options.scenarioName}`
     : options.itemName

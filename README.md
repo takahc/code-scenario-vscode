@@ -36,8 +36,8 @@ Hover over any row in the Code Scenario sidebar to reveal action buttons directl
 |---|---|
 | Scenario | Rename (pencil), Delete (trash), Add Item (+), Set Quick Add Target (target) |
 | Scenario (current Quick Add target) | Rename (pencil), Delete (trash), Add Item (+), Clear Quick Add Target (close) |
-| Item (normal) | Edit (pencil), Delete (trash), Add Child (+), Open (arrow) |
-| Item (stale ⚠) | Edit (pencil), Delete (trash), Add Child (+), Open (arrow), Relink (link) |
+| Item (normal) | Edit (pencil), Delete (trash), Add Child (+), Add Item Below (down arrow), Open (arrow) |
+| Item (stale ⚠) | Edit (pencil), Delete (trash), Add Child (+), Add Item Below (down arrow), Open (arrow), Relink (link) |
 
 All of these actions remain available in the right-click context menu as well.
 
@@ -65,8 +65,10 @@ target still exists.
 - If no target is saved and exactly one scenario exists, that scenario is still used automatically.
 - If no target is saved and multiple scenarios exist, **Add Item** still prompts you to choose a
   scenario.
-- Invoking **Add Item** from a scenario row or item row still uses that explicit row as the add
-  destination.
+- Invoking **Add Item** from a scenario row still uses that explicit scenario as the add destination.
+- Invoking **Add Child Item** from an item row creates a child under that item.
+- Invoking **Add Item Below** from an item row creates a sibling immediately after that item under the
+  same parent.
 
 ## Delete Undo
 

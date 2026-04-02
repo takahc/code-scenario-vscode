@@ -230,26 +230,62 @@ export function activate(context: vscode.ExtensionContext): void {
         if (!target) {
           return;
         }
-
-        const values = await showItemEditor({
-          mode: "add",
-          scenarioName: target.scenarioName,
-          parentItemName: target.parentItemName,
-        });
-        if (!values) {
-          return;
-        }
-
-        const itemId = await provider.addItem(
-          target.scenarioId,
-          target.parentItemId,
-          toScenarioItemData(values)
+        await runAddItemFlow(provider, treeView, target, (values) =>
+          provider.addItem(
+            target.scenarioId,
+            target.parentItemId,
+            toScenarioItemData(values)
+          )
         );
-        if (!itemId) {
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.addChildItem",
+      async (node?: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Add Child Item is only available from an item context menu."
+          );
           return;
         }
 
-        await revealDroppedItem(provider, treeView, target.scenarioId, itemId);
+        const target = await resolveAddTarget(provider, node);
+        if (!target) {
+          return;
+        }
+        await runAddItemFlow(provider, treeView, target, (values) =>
+          provider.addItem(
+            target.scenarioId,
+            target.parentItemId,
+            toScenarioItemData(values)
+          )
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.addItemBelow",
+      async (node?: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Add Item Below is only available from an item context menu."
+          );
+          return;
+        }
+
+        const target = resolveAddBelowTarget(provider, node);
+        await runAddItemFlow(provider, treeView, target, (values) =>
+          provider.addItemBelow(
+            target.scenarioId,
+            target.siblingItemId,
+            toScenarioItemData(values)
+          )
+        );
       }
     )
   );
@@ -1073,6 +1109,57 @@ async function resolveAddTarget(
     scenarioId: selectedScenario.id,
     scenarioName: selectedScenario.name,
   };
+}
+
+function resolveAddBelowTarget(
+  provider: ScenarioProvider,
+  node: ItemNode
+): {
+  scenarioId: string;
+  scenarioName: string;
+  addLocationLabel: string;
+  siblingItemId: string;
+} {
+  return {
+    scenarioId: node.scenarioId,
+    scenarioName: getScenarioName(provider, node.scenarioId),
+    addLocationLabel: `Below: ${node.data.name}`,
+    siblingItemId: node.data.id,
+  };
+}
+
+async function runAddItemFlow(
+  provider: ScenarioProvider,
+  treeView: vscode.TreeView<TreeNode>,
+  target: {
+    scenarioId: string;
+    scenarioName: string;
+    parentItemId?: string;
+    parentItemName?: string;
+    addLocationLabel?: string;
+  } | undefined,
+  createItem: (values: ItemEditorValues) => Promise<string | undefined>
+): Promise<void> {
+  if (!target) {
+    return;
+  }
+
+  const values = await showItemEditor({
+    mode: "add",
+    scenarioName: target.scenarioName,
+    parentItemName: target.parentItemName,
+    addLocationLabel: target.addLocationLabel,
+  });
+  if (!values) {
+    return;
+  }
+
+  const itemId = await createItem(values);
+  if (!itemId) {
+    return;
+  }
+
+  await revealDroppedItem(provider, treeView, target.scenarioId, itemId);
 }
 
 async function resolveQuickAddTarget(
