@@ -25,13 +25,14 @@ Code Scenario の次の UX 改善として、walkthrough の継続性と item no
 - `README.md` を更新した（walkthrough 永続化の説明・Resume/Restart プロンプトの追記、Find Scenario Item の note 検索対応の記載、Item Notes の `✎` インジケータ説明の追記）。
 - `npm run compile` でコンパイルエラーなしを確認した。`npm run lint` は設定ファイル未配置による既存不具合のため実行不可（pre-existing failure）。
 - 実装内容を `feature/walkthrough-continuity` ブランチへ 1 コミットとしてまとめた。
+- checker により、今回の 4 点（位置永続化 / Resume・Restart プロンプト / note インジケータ / note 検索）が意図どおり実装されていることを確認した。
 
 ## Uncompleted
 - feature ブランチの push。
 - pre-release への反映と preview 公開。
 
 ## Cautions
-ワークツリーには今回タスク外の未追跡 `scripts/` が存在するため、コミット対象へ混入させないよう注意する。
+ワークツリーには今回タスク外の未追跡 `scripts/` が存在するため、コミット対象へ混入させないよう注意する。なお、保存済み walkthrough 位置の Resume/Restart 通知が表示中にユーザーがすぐ次/前移動を実行すると、その後の Restart が「進んだあとの位置」を消す形になる可能性があるが、checker 判断では出荷を妨げるものではない。
 
 ## Next Steps
-implementer に、walkthrough 位置永続化と notes 可視化/検索性の 3 点を一つの小さな出荷単位として実装・進捗更新・commit まで進めてもらう。
+feature ブランチを push し、pre-release フローで preview 公開まで進める。
