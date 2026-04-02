@@ -44,6 +44,7 @@
       { "command": "code-scenario.openItem", "title": "Open Item", "icon": "$(go-to-file)" },
       { "command": "code-scenario.renameItem", "title": "Rename Item" },
       { "command": "code-scenario.moveItem", "title": "Move Item..." },
+      { "command": "code-scenario.copyItem", "title": "Copy Item..." },
       { "command": "code-scenario.editItem", "title": "Edit Item", "icon": "$(edit)" },
       { "command": "code-scenario.relinkItem", "title": "Relink Item", "icon": "$(link)" },
       { "command": "code-scenario.deleteItem", "title": "Delete Item", "icon": "$(trash)" },
@@ -188,6 +189,11 @@
           "group": "1_modify"
         },
         {
+          "command": "code-scenario.copyItem",
+          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "group": "1_modify"
+        },
+        {
           "command": "code-scenario.deleteItem",
           "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
           "group": "1_modify"
@@ -212,6 +218,10 @@
         },
         {
           "command": "code-scenario.moveItem",
+          "when": "false"
+        },
+        {
+          "command": "code-scenario.copyItem",
           "when": "false"
         },
         {

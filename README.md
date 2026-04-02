@@ -16,7 +16,15 @@ Items in the Code Scenario sidebar can be reordered and moved between scenarios 
 - Dropping an item to its current position is silently ignored.
 - Multi-item drag, copy-on-drop, and cross-window drag are not supported in v1.
 
-For placing an item as a *child* of another item, use the **Move Item…** context-menu command instead.
+For placing an item as a *child* of another item, use the **Move Item…** or **Copy Item…**
+context-menu command instead.
+
+## Copy Item
+
+Use **Copy Item...** from an item's context menu to duplicate that item and its full subtree into a
+scenario root or under another item as a new child. Copies preserve the stored item metadata,
+including notes, cached line, workspace binding, and stale-state-related path data, while assigning
+fresh internal IDs so the copied branch can be edited independently.
 
 
 
