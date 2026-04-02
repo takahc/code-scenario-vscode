@@ -7,7 +7,7 @@ import {
   MoveItemDestination,
   StaleItemMatch,
 } from "./scenarioProvider";
-import { ScenarioData, ScenarioItemData } from "./scenarioModel";
+import { ScenarioData, ScenarioItemData, ITEM_TYPES, ItemType } from "./scenarioModel";
 import { ItemEditorValues, showItemEditor } from "./itemEditorPanel";
 import { getActiveSelectionText } from "./editorContext";
 import { resolveItemLine } from "./symbolResolver";
@@ -346,12 +346,30 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
+        const symbolTypes = ITEM_TYPES.filter((t) => t !== "file") as Exclude<ItemType, "file">[];
+        // Put "definition" first so it is pre-highlighted in the quick pick
+        const orderedTypes = [
+          "definition" as const,
+          ...symbolTypes.filter((t) => t !== "definition"),
+        ];
+        const typeItems = orderedTypes.map((t) => ({
+          label: t,
+          description: t === "definition" ? "(default)" : undefined,
+        }));
+        const pickedType = await vscode.window.showQuickPick(typeItems, {
+          title: `Item type for "${symbolName}"`,
+          placeHolder: "Select item type (default: definition)",
+        });
+        if (!pickedType) {
+          return;
+        }
+
         const itemId = await provider.addItem(
           target.scenarioId,
           undefined,
           createQuickItemData({
             kind: "symbol",
-            type: "definition",
+            type: pickedType.label as ItemType,
             filePath: fileReference.filePath,
             workspaceFolderUri: fileReference.workspaceFolderUri,
             name: symbolName,
