@@ -2,6 +2,11 @@
   "name": "code-scenario-vscode",
   "displayName": "Code Scenario",
   "description": "Organize and navigate code by scenarios with a sidebar tree view",
+  "publisher": "takahc",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/takahc/code-scenario-vscode"
+  },
   "version": "0.1.0",
   "engines": {
     "vscode": "^1.85.0"
