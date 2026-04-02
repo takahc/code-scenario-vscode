@@ -1,10 +1,13 @@
-export type ItemType =
-  | "declare"
-  | "definition"
-  | "call"
-  | "codeblock"
-  | "reference"
-  | "file";
+export const ITEM_TYPES = [
+  "declare",
+  "definition",
+  "call",
+  "codeblock",
+  "reference",
+  "file",
+] as const;
+
+export type ItemType = (typeof ITEM_TYPES)[number];
 
 export interface ScenarioItemData {
   id: string;
