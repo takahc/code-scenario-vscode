@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { ScenarioData, ScenarioItemData } from "./scenarioModel";
+import { resolveScenarioItemLocation, ScenarioItemLocationResolution } from "./workspacePaths";
 
 // Union type for tree nodes
 export type TreeNode = ScenarioNode | ItemNode;
@@ -163,6 +164,7 @@ export class ScenarioProvider
     } else {
       const label = `${node.data.name}  |  ${node.data.type}`;
       const hasChildren = node.data.children.length > 0;
+      const location = resolveScenarioItemLocation(node.data);
       const item = new vscode.TreeItem(
         label,
         hasChildren
@@ -179,6 +181,17 @@ export class ScenarioProvider
       item.iconPath = node.data.kind === "file"
         ? new vscode.ThemeIcon("file")
         : new vscode.ThemeIcon("symbol-function");
+
+      if (location.status !== "resolved") {
+        item.tooltip = `${item.tooltip}\n⚠ ${formatLocationWarning(location)}`;
+      }
+
+      if (shouldUseWarningStyling(location)) {
+        item.iconPath = new vscode.ThemeIcon(
+          "warning",
+          new vscode.ThemeColor("list.warningForeground")
+        );
+      }
 
       // Command to open the file when clicked
       item.command = {
@@ -245,4 +258,30 @@ function countNestedItems(items: ScenarioItemData[]): number {
 
 function formatCount(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+function formatLocationWarning(location: Exclude<ScenarioItemLocationResolution, {
+  status: "resolved";
+}>): string {
+  if (location.status === "ambiguous") {
+    return `Matches multiple workspace folders: ${location.workspaceFolders.map((folder) => folder.name).join(", ")}`;
+  }
+
+  if (location.reason === "noWorkspaceFolder") {
+    return "No workspace folder is open for this source file.";
+  }
+
+  if (location.reason === "workspaceFolderMissing") {
+    return "Saved workspace folder is no longer available.";
+  }
+
+  return "Source file could not be found.";
+}
+
+function shouldUseWarningStyling(location: ScenarioItemLocationResolution): boolean {
+  if (location.status === "resolved") {
+    return false;
+  }
+
+  return location.status === "ambiguous" || location.reason === "fileMissing";
 }

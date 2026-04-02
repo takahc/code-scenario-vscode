@@ -8,10 +8,24 @@ export interface WorkspaceFileReference {
   workspaceFolderUri: string;
 }
 
-export interface ResolvedItemLocation {
-  absolutePath: string;
-  workspaceFolder?: vscode.WorkspaceFolder;
-}
+export type ScenarioItemLocationResolution =
+  | {
+    status: "resolved";
+    absolutePath: string;
+    workspaceFolder?: vscode.WorkspaceFolder;
+  }
+  | {
+    status: "missing";
+    filePath: string;
+    absolutePath?: string;
+    workspaceFolder?: vscode.WorkspaceFolder;
+    reason: "noWorkspaceFolder" | "workspaceFolderMissing" | "fileMissing";
+  }
+  | {
+    status: "ambiguous";
+    filePath: string;
+    workspaceFolders: vscode.WorkspaceFolder[];
+  };
 
 export interface ValidatedWorkspaceFileInput {
   filePath: string;
@@ -37,46 +51,89 @@ export function getActiveWorkspaceFileReference(): WorkspaceFileReference | unde
 
 export function resolveScenarioItemLocation(
   item: Pick<ScenarioItemData, "filePath" | "workspaceFolderUri">
-): ResolvedItemLocation | undefined {
+): ScenarioItemLocationResolution {
   if (path.isAbsolute(item.filePath)) {
-    const absoluteUri = vscode.Uri.file(item.filePath);
+    const absolutePath = path.normalize(item.filePath);
+    const absoluteUri = vscode.Uri.file(absolutePath);
+    if (!isExistingFile(absolutePath)) {
+      return {
+        status: "missing",
+        filePath: item.filePath,
+        absolutePath,
+        reason: "fileMissing",
+      };
+    }
+
     return {
-      absolutePath: item.filePath,
+      status: "resolved",
+      absolutePath,
       workspaceFolder: vscode.workspace.getWorkspaceFolder(absoluteUri),
     };
   }
 
   const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
   if (workspaceFolders.length === 0) {
-    return undefined;
+    return {
+      status: "missing",
+      filePath: item.filePath,
+      reason: "noWorkspaceFolder",
+    };
   }
 
   if (item.workspaceFolderUri) {
     const workspaceFolder = workspaceFolders.find(
       (folder) => folder.uri.toString() === item.workspaceFolderUri
     );
-    if (workspaceFolder) {
+    if (!workspaceFolder) {
       return {
-        absolutePath: path.join(workspaceFolder.uri.fsPath, item.filePath),
-        workspaceFolder,
+        status: "missing",
+        filePath: item.filePath,
+        reason: "workspaceFolderMissing",
       };
     }
+
+    const absolutePath = path.join(workspaceFolder.uri.fsPath, item.filePath);
+    if (!isExistingFile(absolutePath)) {
+      return {
+        status: "missing",
+        filePath: item.filePath,
+        absolutePath,
+        workspaceFolder,
+        reason: "fileMissing",
+      };
+    }
+
+    return {
+      status: "resolved",
+      absolutePath,
+      workspaceFolder,
+    };
   }
 
   const matchingFolders = workspaceFolders.filter((folder) =>
-    fs.existsSync(path.join(folder.uri.fsPath, item.filePath))
+    isExistingFile(path.join(folder.uri.fsPath, item.filePath))
   );
 
   if (matchingFolders.length === 1) {
     return {
+      status: "resolved",
       absolutePath: path.join(matchingFolders[0].uri.fsPath, item.filePath),
       workspaceFolder: matchingFolders[0],
     };
   }
 
+  if (matchingFolders.length > 1) {
+    return {
+      status: "ambiguous",
+      filePath: item.filePath,
+      workspaceFolders: matchingFolders,
+    };
+  }
+
   return {
-    absolutePath: path.join(workspaceFolders[0].uri.fsPath, item.filePath),
-    workspaceFolder: workspaceFolders[0],
+    status: "missing",
+    filePath: item.filePath,
+    reason: "fileMissing",
   };
 }
 
@@ -192,4 +249,12 @@ export function validateWorkspaceFileInput(
 function normalizeRelativeFilePath(filePath: string): string {
   const normalized = path.posix.normalize(filePath.replace(/\\/g, "/"));
   return normalized === "." ? "" : normalized;
+}
+
+function isExistingFile(filePath: string): boolean {
+  try {
+    return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
 }

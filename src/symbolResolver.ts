@@ -1,6 +1,11 @@
 import * as vscode from "vscode";
 import { ScenarioItemData } from "./scenarioModel";
 
+export interface ResolvedItemLine {
+  line: number;
+  usedFallback: boolean;
+}
+
 /**
  * Resolves the line number of a scenario item in its file.
  * For file-kind items, returns line 0.
@@ -9,9 +14,12 @@ import { ScenarioItemData } from "./scenarioModel";
 export async function resolveItemLine(
   item: ScenarioItemData,
   absolutePath: string
-): Promise<number> {
+): Promise<ResolvedItemLine> {
   if (item.kind === "file") {
-    return 0;
+    return {
+      line: 0,
+      usedFallback: false,
+    };
   }
 
   const uri = vscode.Uri.file(absolutePath);
@@ -23,18 +31,21 @@ export async function resolveItemLine(
     );
 
     if (!symbols) {
-      return item.line >= 0 ? item.line : 0;
+      return fallbackLine(item);
     }
 
     const found = findSymbol(symbols, item.name);
     if (found !== undefined) {
-      return found;
+      return {
+        line: found,
+        usedFallback: false,
+      };
     }
   } catch {
     // Fallback to cached line
   }
 
-  return item.line >= 0 ? item.line : 0;
+  return fallbackLine(item);
 }
 
 function findSymbol(
@@ -53,4 +64,11 @@ function findSymbol(
     }
   }
   return undefined;
+}
+
+function fallbackLine(item: ScenarioItemData): ResolvedItemLine {
+  return {
+    line: item.line >= 0 ? item.line : 0,
+    usedFallback: true,
+  };
 }

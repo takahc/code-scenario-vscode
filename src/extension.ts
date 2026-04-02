@@ -4,7 +4,11 @@ import { ScenarioItemData } from "./scenarioModel";
 import { ItemEditorValues, showItemEditor } from "./itemEditorPanel";
 import { getActiveSelectionText } from "./editorContext";
 import { resolveItemLine } from "./symbolResolver";
-import { getActiveWorkspaceFileReference, resolveScenarioItemLocation } from "./workspacePaths";
+import {
+  getActiveWorkspaceFileReference,
+  resolveScenarioItemLocation,
+  ScenarioItemLocationResolution,
+} from "./workspacePaths";
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new ScenarioProvider(context);
@@ -224,18 +228,30 @@ export function activate(context: vscode.ExtensionContext): void {
       "code-scenario.openItem",
       async (node: ItemNode) => {
         const location = resolveScenarioItemLocation(node.data);
-        if (!location) {
-          vscode.window.showErrorMessage("No workspace folder is open.");
+        if (location.status === "missing") {
+          await showOpenItemWarning(
+            node,
+            formatLocationMessage(location)
+          );
+          return;
+        }
+
+        if (location.status === "ambiguous") {
+          await showOpenItemWarning(
+            node,
+            formatLocationMessage(location)
+          );
           return;
         }
 
         const uri = vscode.Uri.file(location.absolutePath);
 
         // Resolve line number
-        const line = await resolveItemLine(node.data, location.absolutePath);
+        const lineResult = await resolveItemLine(node.data, location.absolutePath);
 
-        // Update cached line
-        await provider.editItem(node.scenarioId, node.data.id, { line });
+        if (!lineResult.usedFallback) {
+          await provider.editItem(node.scenarioId, node.data.id, { line: lineResult.line });
+        }
 
         const document = await vscode.workspace.openTextDocument(uri);
         const editor = await vscode.window.showTextDocument(document, {
@@ -244,12 +260,18 @@ export function activate(context: vscode.ExtensionContext): void {
         });
 
         // Move cursor to the resolved line
-        const position = new vscode.Position(Math.max(0, line), 0);
+        const position = new vscode.Position(Math.max(0, lineResult.line), 0);
         editor.selection = new vscode.Selection(position, position);
         editor.revealRange(
           new vscode.Range(position, position),
           vscode.TextEditorRevealType.InCenter
         );
+
+        if (lineResult.usedFallback) {
+          await vscode.window.showWarningMessage(
+            `Opened "${node.data.name}" using a fallback location because the symbol could not be resolved in "${node.data.filePath}".`
+          );
+        }
       }
     )
   );
@@ -369,4 +391,35 @@ function createQuickItemData(options: {
       : {}),
     line: -1,
   };
+}
+
+async function showOpenItemWarning(
+  node: ItemNode,
+  message: string
+): Promise<void> {
+  const action = await vscode.window.showWarningMessage(message, "Edit Item");
+  if (action === "Edit Item") {
+    await vscode.commands.executeCommand("code-scenario.editItem", node);
+  }
+}
+
+function formatLocationMessage(
+  location: Exclude<ScenarioItemLocationResolution, {
+    status: "resolved";
+  }>
+): string {
+  if (location.status === "ambiguous") {
+    const workspaceNames = location.workspaceFolders.map((folder) => folder.name).join(", ");
+    return `Source file "${location.filePath}" matches multiple workspace folders (${workspaceNames}). Edit the item to choose the exact file.`;
+  }
+
+  if (location.reason === "noWorkspaceFolder") {
+    return `Source file "${location.filePath}" could not be resolved because no workspace folder is open. Edit the item to choose an available file.`;
+  }
+
+  if (location.reason === "workspaceFolderMissing") {
+    return `Saved workspace folder for "${location.filePath}" is no longer available. Edit the item to choose the correct file.`;
+  }
+
+  return `Source file "${location.filePath}" was not found. Edit the item to choose the correct file.`;
 }
