@@ -266,6 +266,21 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
+        const shouldProceed = await checkQuickAddDuplicate(
+          provider,
+          treeView,
+          target.scenarioId,
+          target.scenarioName,
+          {
+            kind: "file",
+            filePath: fileReference.filePath,
+            workspaceFolderUri: fileReference.workspaceFolderUri,
+          }
+        );
+        if (!shouldProceed) {
+          return;
+        }
+
         const itemId = await provider.addItem(
           target.scenarioId,
           undefined,
@@ -311,6 +326,22 @@ export function activate(context: vscode.ExtensionContext): void {
 
         const target = await resolveQuickAddTarget(provider);
         if (!target) {
+          return;
+        }
+
+        const shouldProceed = await checkQuickAddDuplicate(
+          provider,
+          treeView,
+          target.scenarioId,
+          target.scenarioName,
+          {
+            kind: "symbol",
+            filePath: fileReference.filePath,
+            workspaceFolderUri: fileReference.workspaceFolderUri,
+            symbolName,
+          }
+        );
+        if (!shouldProceed) {
           return;
         }
 
@@ -363,6 +394,22 @@ export function activate(context: vscode.ExtensionContext): void {
         }
 
         const filePath = vscode.workspace.asRelativePath(uri, false);
+
+        const shouldProceed = await checkQuickAddDuplicate(
+          provider,
+          treeView,
+          target.scenarioId,
+          target.scenarioName,
+          {
+            kind: "file",
+            filePath,
+            workspaceFolderUri: workspaceFolder.uri.toString(),
+          }
+        );
+        if (!shouldProceed) {
+          return;
+        }
+
         const itemId = await provider.addItem(
           target.scenarioId,
           undefined,
@@ -1184,6 +1231,124 @@ function formatLocationMessage(
   }
 
   return `Source file "${location.filePath}" was not found. Edit the item to choose the correct file.`;
+}
+
+// ── Duplicate-add guard ───────────────────────────────────────
+
+interface DuplicateGuardQuery {
+  kind: ScenarioItemData["kind"];
+  filePath: string;
+  workspaceFolderUri?: string;
+  /** Required (and used) only when kind === "symbol". */
+  symbolName?: string;
+}
+
+/**
+ * Finds all items in the given scenario that match the query.
+ * Searches the full item tree (top-level items and their descendants).
+ */
+function findDuplicatesInScenario(
+  scenario: ScenarioData,
+  query: DuplicateGuardQuery
+): ItemNode[] {
+  const results: ItemNode[] = [];
+  collectDuplicateItems(scenario.items, scenario.id, query, results);
+  return results;
+}
+
+function collectDuplicateItems(
+  items: ScenarioItemData[],
+  scenarioId: string,
+  query: DuplicateGuardQuery,
+  results: ItemNode[]
+): void {
+  for (const item of items) {
+    const pathMatches = item.filePath === query.filePath;
+    // An item with no workspaceFolderUri is treated as potentially matching any
+    // folder (same logic as collectFileMatchesFromItems / revealActiveFileInTree).
+    const folderMatches =
+      item.workspaceFolderUri === undefined ||
+      query.workspaceFolderUri === undefined ||
+      item.workspaceFolderUri === query.workspaceFolderUri;
+    const kindMatches = item.kind === query.kind;
+    const nameMatches =
+      query.kind === "symbol" ? item.name === query.symbolName : true;
+
+    if (pathMatches && folderMatches && kindMatches && nameMatches) {
+      results.push(new ItemNode(item, scenarioId));
+    }
+    collectDuplicateItems(item.children, scenarioId, query, results);
+  }
+}
+
+/**
+ * Checks whether the target scenario already contains an item matching `query`.
+ * If a duplicate is found, shows an information notification with "Reveal" and
+ * "Add anyway" actions and handles them:
+ *   - "Reveal"    → reveals the existing item (user picks if multiple), returns false.
+ *   - "Add anyway" → returns true (caller should proceed with the add).
+ *   - Dismissed   → returns false (caller should abort the add).
+ *
+ * Returns true when no duplicate exists (caller should proceed with the add).
+ */
+async function checkQuickAddDuplicate(
+  provider: ScenarioProvider,
+  treeView: vscode.TreeView<TreeNode>,
+  scenarioId: string,
+  scenarioName: string,
+  query: DuplicateGuardQuery
+): Promise<boolean> {
+  const scenario = provider.getScenarioById(scenarioId);
+  if (!scenario) {
+    return true; // scenario not found; let the add proceed and fail naturally
+  }
+
+  const duplicates = findDuplicatesInScenario(scenario, query);
+  if (duplicates.length === 0) {
+    return true; // no duplicate, proceed as usual
+  }
+
+  const subject =
+    query.kind === "symbol"
+      ? `"${query.symbolName}"`
+      : `"${query.filePath}"`;
+
+  const action = await vscode.window.showInformationMessage(
+    `${subject} is already in scenario "${scenarioName}".`,
+    "Reveal",
+    "Add anyway"
+  );
+
+  if (action === "Add anyway") {
+    return true;
+  }
+
+  if (action === "Reveal") {
+    if (duplicates.length === 1) {
+      await revealItemNode(treeView, duplicates[0]);
+    } else {
+      // Multiple duplicates — let the user choose which to reveal.
+      const selected = await vscode.window.showQuickPick(
+        duplicates.map((node) => ({
+          label: node.data.name,
+          description: `${scenarioName} · ${node.data.filePath}`,
+          detail: `Type: ${node.data.type}`,
+          node,
+        })),
+        {
+          placeHolder: "Multiple matching items — select one to reveal",
+          matchOnDescription: true,
+          matchOnDetail: true,
+        }
+      );
+      if (selected) {
+        await revealItemNode(treeView, selected.node);
+      }
+    }
+  }
+
+  // "Reveal" was handled above; dismissed falls through here — both block the add.
+  return false;
 }
 
 // ── DnD reveal helper ─────────────────────────────────────────
