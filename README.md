@@ -111,6 +111,35 @@ When a duplicate is detected an information notification appears with two action
 
 The check is **scoped to the target scenario only** — adding the same file or symbol to a different scenario is never blocked.
 
+## Sequential Scenario Walkthrough
+
+Use **Next Scenario Item** and **Previous Scenario Item** to step through all items in a scenario
+one by one, in depth-first tree order.
+
+- **First invocation** — if no walkthrough position is active, the extension resolves the scenario
+  to walk through:
+  - If an effective **Quick Add target** scenario exists (either explicitly set or auto-selected
+    because only one scenario exists), that scenario is used automatically.
+  - If multiple scenarios exist and no Quick Add target is set, a Quick Pick prompts you to choose.
+- **Subsequent invocations** — steps forward or backward through the flat item list of the same
+  scenario. The position is remembered for the duration of the session.
+- **Empty scenario** — an informational message is shown and the walkthrough does not advance.
+- **Wrap-around** — stepping past the last item wraps to the first (and vice versa); a brief
+  informational message indicates the wrap.
+- After each step the item is opened in the editor (using the normal open behavior) and revealed
+  and selected in the Code Scenario tree.
+
+The walkthrough position is **session-only** and is not persisted across window reloads or restarts.
+
+### How to invoke
+
+| Method | Action |
+|---|---|
+| Keyboard | `Ctrl+Shift+Alt+]` — Next Scenario Item |
+| Keyboard | `Ctrl+Shift+Alt+[` — Previous Scenario Item |
+| Command Palette | `Next Scenario Item` |
+| Command Palette | `Previous Scenario Item` |
+
 ## Keyboard Shortcuts
 
 The extension contributes the following default keyboard shortcuts for the most common workflows.
@@ -123,6 +152,8 @@ All bindings use the `Ctrl+Shift+Alt` chord prefix to avoid conflicts with VS Co
 | `Ctrl+Shift+Alt+N` | Add Scenario | Code Scenario sidebar focused |
 | `Ctrl+Shift+Alt+F` | Find Scenario Item... | Always available |
 | `Ctrl+Shift+Alt+E` | Reveal Active File in Scenarios | Editor focused |
+| `Ctrl+Shift+Alt+]` | Next Scenario Item | Global |
+| `Ctrl+Shift+Alt+[` | Previous Scenario Item | Global |
 
 > **Tip — common editing flow:** Open a file, press `Ctrl+Shift+Alt+A` to bookmark it to a
 > scenario. Select a function or class name, then press `Ctrl+Shift+Alt+S` to bookmark that

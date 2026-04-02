@@ -866,6 +866,26 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
+  // ── Walkthrough position (session-only, not persisted) ───────
+
+  let walkthroughPosition: { scenarioId: string; itemId: string } | undefined;
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("code-scenario.nextItem", async () => {
+      await stepWalkthrough("next", walkthroughPosition, provider, treeView, (pos) => {
+        walkthroughPosition = pos;
+      });
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("code-scenario.previousItem", async () => {
+      await stepWalkthrough("prev", walkthroughPosition, provider, treeView, (pos) => {
+        walkthroughPosition = pos;
+      });
+    })
+  );
+
   // ── Auto-reveal on active editor change ───────────────────────
 
   let autoRevealTimer: ReturnType<typeof setTimeout> | undefined;
@@ -1629,5 +1649,126 @@ async function showDeleteUndoNotification(
   const result = await provider.undoDelete(undoToken);
   if (!result.ok) {
     await vscode.window.showWarningMessage(result.reason);
+  }
+}
+
+// ── Sequential walkthrough helpers ───────────────────────────
+
+/**
+ * Resolves which scenario to use when no walkthrough position is active.
+ * Uses the effective quick add target when available; otherwise prompts the
+ * user to pick from all scenarios.
+ */
+async function resolveWalkthroughScenario(
+  provider: ScenarioProvider
+): Promise<ScenarioData | undefined> {
+  const scenarios = provider.getScenarios();
+  if (scenarios.length === 0) {
+    await vscode.window.showInformationMessage(
+      "Create a scenario before using the walkthrough."
+    );
+    return undefined;
+  }
+
+  const effective = provider.getEffectiveQuickAddScenario();
+  if (effective) {
+    return effective;
+  }
+
+  // Multiple scenarios, no effective quick add target — ask the user.
+  return pickScenario(scenarios, {
+    title: "Scenario Walkthrough",
+    placeHolder: "Select a scenario to walk through",
+  });
+}
+
+/**
+ * Steps forward (`"next"`) or backward (`"prev"`) through the flat item list
+ * of the current walkthrough scenario, opens the target item, and reveals it
+ * in the tree.  Wraps around at the boundaries and shows a brief info message
+ * when wrapping occurs.
+ */
+async function stepWalkthrough(
+  direction: "next" | "prev",
+  currentPosition: { scenarioId: string; itemId: string } | undefined,
+  provider: ScenarioProvider,
+  treeView: vscode.TreeView<TreeNode>,
+  setPosition: (pos: { scenarioId: string; itemId: string } | undefined) => void
+): Promise<void> {
+  let scenarioId: string;
+
+  if (currentPosition) {
+    scenarioId = currentPosition.scenarioId;
+  } else {
+    const scenario = await resolveWalkthroughScenario(provider);
+    if (!scenario) { return; }
+    scenarioId = scenario.id;
+  }
+
+  // If we had an active position but the scenario no longer exists, clear it
+  // and let the user know so the next invocation re-resolves cleanly.
+  if (currentPosition && !provider.getScenarioById(scenarioId)) {
+    setPosition(undefined);
+    await vscode.window.showInformationMessage(
+      "The previously active walkthrough scenario no longer exists. " +
+      "Invoke the command again to choose another scenario."
+    );
+    return;
+  }
+
+  const flatItems = provider.getFlatItemNodes(scenarioId);
+
+  if (flatItems.length === 0) {
+    const scenario = provider.getScenarioById(scenarioId);
+    await vscode.window.showInformationMessage(
+      `Scenario "${scenario!.name}" has no items to walk through.`
+    );
+    return;
+  }
+
+  let nextIndex: number;
+  let wrapped = false;
+
+  if (!currentPosition) {
+    // No active position yet: land on first (next) or last (prev) item.
+    nextIndex = direction === "next" ? 0 : flatItems.length - 1;
+  } else {
+    const currentIndex = flatItems.findIndex((n) => n.data.id === currentPosition.itemId);
+    if (currentIndex === -1) {
+      // Item was deleted since last step; restart from boundary.
+      nextIndex = direction === "next" ? 0 : flatItems.length - 1;
+    } else if (direction === "next") {
+      if (currentIndex === flatItems.length - 1) {
+        nextIndex = 0;
+        wrapped = true;
+      } else {
+        nextIndex = currentIndex + 1;
+      }
+    } else {
+      if (currentIndex === 0) {
+        nextIndex = flatItems.length - 1;
+        wrapped = true;
+      } else {
+        nextIndex = currentIndex - 1;
+      }
+    }
+  }
+
+  const targetNode = flatItems[nextIndex];
+  setPosition({ scenarioId, itemId: targetNode.data.id });
+
+  // Open the item using the existing open behavior.
+  await vscode.commands.executeCommand("code-scenario.openItem", targetNode);
+  // Reveal and select it in the tree.
+  await revealItemNode(treeView, targetNode);
+
+  if (wrapped && flatItems.length > 1) {
+    const scenario = provider.getScenarioById(scenarioId);
+    const label = scenario?.name ?? scenarioId;
+    const msg =
+      direction === "next"
+        ? `Wrapped to the first item in "${label}".`
+        : `Wrapped to the last item in "${label}".`;
+    await vscode.window.showInformationMessage(msg);
   }
 }
