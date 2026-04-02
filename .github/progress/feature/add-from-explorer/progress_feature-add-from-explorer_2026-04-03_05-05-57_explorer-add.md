@@ -28,12 +28,15 @@ VS Code Explorer の file context menu から scenario 追加を行えるよう�
 - checker 指摘として Explorer context menu の group が `navigation` だと上位に出すぎるため、preview 前に `2_workspace` へ下げる小修正を入れる方針にした。
 - PM 判断で `package.json` の Explorer menu group を `2_workspace` に調整し、右クリックメニューでの主張が強すぎない配置へ整えた。
 - checker の最終確認で release blocker はなし、`npm run compile` 成功・`npm run lint` は既存 baseline failure のままと再確認した。
+- 変更一式と progress を `feat: add explorer scenario shortcut` として commit し、`origin/feature/add-from-explorer` へ push した。
+- 未追跡の `scripts/` を避けるため一時 worktree で `origin/pre-release` へ `origin/feature/add-from-explorer` を `merge: feature/add-from-explorer into pre-release` として取り込み、push した。
+- `Publish Extension` workflow (run `23920086479`) が成功し、`Publish pre-release extension` step まで完了して version `0.1.32` の preview 公開が走った。
 
 ## Uncompleted
-- 完了時の commit / pre-release 反映。
+(なし)
 
 ## Cautions
 作業ツリーには未追跡の `scripts/` ディレクトリが存在するため、今回ブランチでの commit 対象へ含めないよう注意が必要。Explorer menu は folder や workspace 外 resource に誤表示すると user-facing ノイズになるため、表示条件と URI 解決条件を慎重に確認する。`npm run lint` は今回変更起因ではなく、既存の ESLint 設定ファイル不在により baseline failure のままである。
 
 ## Next Steps
-変更一式と progress を適切な commit にまとめ、`pre-release` へ取り込んで preview publish を走らせる。
+必要に応じて Marketplace 上の pre-release 反映内容を確認し、次の Infinity UX loop の候補選定へ進む。
