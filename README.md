@@ -72,6 +72,23 @@ in the Code Scenario tree — the reverse of clicking an item to open it.
 | Tree toolbar | Click the **eye** (👁) icon in the Code Scenario panel header |
 | Command Palette | `Reveal Active File in Scenarios` |
 
+## Find Scenario Item
+
+Use **Find Scenario Item...** to search all stored scenario items from a Quick Pick, then jump to
+the selected result.
+
+- Type part of the **item label**, **scenario name**, and/or **file path**.
+- Results show the scenario name plus path context to help distinguish similar items.
+- Selecting a result reveals it in the Code Scenario tree and opens it with the existing item-open
+  behavior.
+
+### How to invoke
+
+| Method | Action |
+|---|---|
+| Tree toolbar | Click the **search** (🔍) icon in the Code Scenario panel header |
+| Command Palette | `Find Scenario Item...` |
+
 ### Auto-reveal on editor change
 
 Set `codeScenario.autoRevealInTree` to `true` to have the first matching scenario item revealed

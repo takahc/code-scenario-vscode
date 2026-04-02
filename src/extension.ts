@@ -423,6 +423,45 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.findScenarioItem",
+      async () => {
+        const matches = findScenarioItemMatches(provider.getScenarios());
+        if (matches.length === 0) {
+          await vscode.window.showInformationMessage(
+            "No scenario items are available to search."
+          );
+          return;
+        }
+
+        const selected = await vscode.window.showQuickPick(
+          matches.map((match) => ({
+            label: match.node.data.name,
+            description: match.ancestorPath
+              ? `${match.scenarioName} · ${match.ancestorPath}`
+              : match.scenarioName,
+            detail: formatScenarioItemSearchDetail(match),
+            match,
+          })),
+          {
+            title: "Find Scenario Item",
+            placeHolder: "Type an item label, scenario name, or file path",
+            matchOnDescription: true,
+            matchOnDetail: true,
+          }
+        );
+
+        if (!selected) {
+          return;
+        }
+
+        await revealItemNode(treeView, selected.match.node);
+        await vscode.commands.executeCommand("code-scenario.openItem", selected.match.node);
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.revealActiveFileInTree",
       async () => {
         const fileReference = getActiveWorkspaceFileReference();
@@ -832,15 +871,7 @@ async function revealDroppedItem(
 ): Promise<void> {
   const data = provider.findItem(scenarioId, itemId);
   if (!data) { return; }
-  try {
-    await treeView.reveal(new ItemNode(data, scenarioId), {
-      select: true,
-      focus: false,
-      expand: true,
-    });
-  } catch {
-    // reveal can throw if the view is not visible; swallow silently
-  }
+  await revealItemNode(treeView, new ItemNode(data, scenarioId));
 }
 
 // ── Reveal helpers ────────────────────────────────────────────
@@ -848,6 +879,13 @@ async function revealDroppedItem(
 interface FileMatch {
   node: ItemNode;
   scenarioName: string;
+}
+
+interface ScenarioItemMatch {
+  node: ItemNode;
+  scenarioName: string;
+  ancestorPath?: string;
+  workspaceFolderName?: string;
 }
 
 function findFileMatches(
@@ -893,5 +931,75 @@ function collectFileMatchesFromItems(
       workspaceFolderUri,
       results
     );
+  }
+}
+
+function findScenarioItemMatches(scenarios: ScenarioData[]): ScenarioItemMatch[] {
+  const results: ScenarioItemMatch[] = [];
+  for (const scenario of scenarios) {
+    collectScenarioItemMatchesFromItems(
+      scenario.items,
+      scenario.id,
+      scenario.name,
+      results
+    );
+  }
+  return results;
+}
+
+function collectScenarioItemMatchesFromItems(
+  items: ScenarioItemData[],
+  scenarioId: string,
+  scenarioName: string,
+  results: ScenarioItemMatch[],
+  ancestorNames: string[] = []
+): void {
+  for (const item of items) {
+    results.push({
+      node: new ItemNode(item, scenarioId),
+      scenarioName,
+      ancestorPath: ancestorNames.length > 0 ? ancestorNames.join(" › ") : undefined,
+      workspaceFolderName: getWorkspaceFolderName(item.workspaceFolderUri),
+    });
+    collectScenarioItemMatchesFromItems(
+      item.children,
+      scenarioId,
+      scenarioName,
+      results,
+      [...ancestorNames, item.name]
+    );
+  }
+}
+
+function getWorkspaceFolderName(workspaceFolderUri: string | undefined): string | undefined {
+  if (!workspaceFolderUri) {
+    return undefined;
+  }
+
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(workspaceFolderUri));
+  return workspaceFolder?.name;
+}
+
+function formatScenarioItemSearchDetail(match: ScenarioItemMatch): string {
+  const detailParts = [match.node.data.filePath];
+  if (match.workspaceFolderName) {
+    detailParts.push(match.workspaceFolderName);
+  }
+  detailParts.push(`Type: ${match.node.data.type}`);
+  return detailParts.join(" · ");
+}
+
+async function revealItemNode(
+  treeView: vscode.TreeView<TreeNode>,
+  node: ItemNode
+): Promise<void> {
+  try {
+    await treeView.reveal(node, {
+      select: true,
+      focus: false,
+      expand: true,
+    });
+  } catch {
+    // reveal can throw if the view is not visible; swallow silently
   }
 }
