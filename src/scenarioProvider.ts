@@ -6,6 +6,14 @@ import { resolveScenarioItemLocation, ScenarioItemLocationResolution } from "./w
 // Union type for tree nodes
 export type TreeNode = ScenarioNode | ItemNode;
 
+export interface StaleItemMatch {
+  node: ItemNode;
+  scenarioName: string;
+  ancestorPath?: string;
+  workspaceFolderName?: string;
+  staleReason: string;
+}
+
 const QUICK_ADD_SCENARIO_ID_KEY = "quickAddScenarioId";
 
 export class ScenarioNode {
@@ -131,6 +139,19 @@ export class ScenarioProvider
 
   getScenarioById(scenarioId: string): ScenarioData | undefined {
     return this.scenarios.find((scenario) => scenario.id === scenarioId);
+  }
+
+  getStaleItemMatches(): StaleItemMatch[] {
+    const results: StaleItemMatch[] = [];
+    for (const scenario of this.scenarios) {
+      collectStaleItemMatchesFromItems(
+        scenario.items,
+        scenario.id,
+        scenario.name,
+        results
+      );
+    }
+    return results;
   }
 
   private getQuickAddScenarioId(): string | undefined {
@@ -1009,6 +1030,44 @@ function formatLocationWarning(location: Exclude<ScenarioItemLocationResolution,
   }
 
   return "Source file could not be found.";
+}
+
+function collectStaleItemMatchesFromItems(
+  items: ScenarioItemData[],
+  scenarioId: string,
+  scenarioName: string,
+  results: StaleItemMatch[],
+  ancestorNames: string[] = []
+): void {
+  for (const item of items) {
+    const location = resolveScenarioItemLocation(item);
+    if (location.status !== "resolved" && shouldUseWarningStyling(location)) {
+      results.push({
+        node: new ItemNode(item, scenarioId),
+        scenarioName,
+        ancestorPath: ancestorNames.length > 0 ? ancestorNames.join(" › ") : undefined,
+        workspaceFolderName: getWorkspaceFolderName(item.workspaceFolderUri),
+        staleReason: formatLocationWarning(location),
+      });
+    }
+
+    collectStaleItemMatchesFromItems(
+      item.children,
+      scenarioId,
+      scenarioName,
+      results,
+      [...ancestorNames, item.name]
+    );
+  }
+}
+
+function getWorkspaceFolderName(workspaceFolderUri: string | undefined): string | undefined {
+  if (!workspaceFolderUri) {
+    return undefined;
+  }
+
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(workspaceFolderUri));
+  return workspaceFolder?.name;
 }
 
 function shouldUseWarningStyling(location: ScenarioItemLocationResolution): boolean {
