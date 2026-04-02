@@ -56,6 +56,17 @@ notification with an **Undo** action.
 If the original parent or surrounding order has changed in a way that makes exact restoration
 ambiguous, Undo is rejected with a warning instead of restoring to a guessed location.
 
+## Add to Scenario from Explorer
+
+Right-click any file in the VS Code Explorer (sidebar file tree) and choose **Add to Scenario...** to add that file directly to a scenario — no need to open the file first.
+
+- If a **Quick Add target** scenario is saved, the file is added immediately to that scenario.
+- If exactly one scenario exists and no target is saved, the file is added to that scenario automatically.
+- If multiple scenarios exist and no target is saved, a Quick Pick prompt lets you choose the scenario (the choice is then saved as the new Quick Add target).
+- After success, a brief notification confirms which scenario received the file.
+
+The command appears only for files (not folders) that are inside the current workspace.
+
 ## Keyboard Shortcuts
 
 The extension contributes the following default keyboard shortcuts for the most common workflows.

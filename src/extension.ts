@@ -340,6 +340,54 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.addFileFromExplorer",
+      async (uri?: vscode.Uri) => {
+        if (!uri || uri.scheme !== "file") {
+          await vscode.window.showWarningMessage(
+            "Add to Scenario... requires a local file selected in the Explorer."
+          );
+          return;
+        }
+
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+        if (!workspaceFolder) {
+          await vscode.window.showWarningMessage(
+            "The selected file is outside the current workspace and cannot be added to a scenario."
+          );
+          return;
+        }
+
+        const target = await resolveQuickAddTarget(provider);
+        if (!target) {
+          return;
+        }
+
+        const filePath = vscode.workspace.asRelativePath(uri, false);
+        const itemId = await provider.addItem(
+          target.scenarioId,
+          undefined,
+          createQuickItemData({
+            kind: "file",
+            type: "file",
+            filePath,
+            workspaceFolderUri: workspaceFolder.uri.toString(),
+          })
+        );
+        if (!itemId) {
+          return;
+        }
+
+        await revealDroppedItem(provider, treeView, target.scenarioId, itemId);
+
+        await vscode.window.showInformationMessage(
+          `Added "${filePath}" to scenario "${target.scenarioName}".`
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.setQuickAddScenario",
       async (node?: ScenarioNode) => {
         if (node instanceof ScenarioNode) {

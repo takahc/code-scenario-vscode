@@ -51,7 +51,8 @@
       { "command": "code-scenario.deleteItem", "title": "Delete Item", "icon": "$(trash)" },
       { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" },
       { "command": "code-scenario.findScenarioItem", "title": "Find Scenario Item...", "icon": "$(search)" },
-      { "command": "code-scenario.revealActiveFileInTree", "title": "Reveal Active File in Scenarios", "icon": "$(eye)" }
+      { "command": "code-scenario.revealActiveFileInTree", "title": "Reveal Active File in Scenarios", "icon": "$(eye)" },
+      { "command": "code-scenario.addFileFromExplorer", "title": "Add to Scenario..." }
     ],
     "keybindings": [
       {
@@ -212,7 +213,18 @@
           "group": "navigation"
         }
       ],
+      "explorer/context": [
+       {
+         "command": "code-scenario.addFileFromExplorer",
+         "when": "!explorerResourceIsFolder && resourceScheme == 'file'",
+          "group": "2_workspace"
+       }
+      ],
       "commandPalette": [
+        {
+          "command": "code-scenario.addFileFromExplorer",
+          "when": "false"
+        },
         {
           "command": "code-scenario.openItem",
           "when": "false"
