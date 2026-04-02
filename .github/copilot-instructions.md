@@ -7,8 +7,9 @@
 - `main` または `develop` ブランチへの反映は Pull Request によるマージでのみ行う。
 
 ## Progress
-- 進捗を`$workspaceRoot/.github/progress/<branchName>/progress_<branchName>_<startDateTime:YYYY-MM-DD_HH-mm-ss>_<shortTaskName>.md`に記録する。
+- 進捗を`$workspaceRoot/.github/progress/<branchNameAsPath>/progress_<branchName>_<startDateTime:YYYY-MM-DD_HH-mm-ss>_<shortTaskName>.md`に記録する。
 - `<branchName>`はブランチ名の`/`を`-`に置換する。
+- `<branchNameAsPath>`はブランチ名の`/`をそのまま使用する。
 - 日本語で記述する。
 - 内容は以下のテンプレートに従う。
 ```md
