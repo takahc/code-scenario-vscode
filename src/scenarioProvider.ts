@@ -297,9 +297,12 @@ export class ScenarioProvider
       item.description = hasChildren
         ? `${node.data.filePath} · ${formatCount(node.data.children.length, "child")}`
         : node.data.filePath;
+      const actionHint = location.status === "resolved"
+        ? "Click to open in the editor."
+        : "Click to review file resolution or edit this item.";
       item.tooltip = hasChildren
-        ? `${node.data.name} (${node.data.type})\n${node.data.filePath}\n${formatCount(node.data.children.length, "child")}`
-        : `${node.data.name} (${node.data.type})\n${node.data.filePath}`;
+        ? `${node.data.name} (${node.data.type})\n${node.data.filePath}\n${formatCount(node.data.children.length, "child")}\n${actionHint}`
+        : `${node.data.name} (${node.data.type})\n${node.data.filePath}\n${actionHint}`;
       item.iconPath = node.data.kind === "file"
         ? new vscode.ThemeIcon("file")
         : new vscode.ThemeIcon("symbol-function");

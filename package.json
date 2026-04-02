@@ -39,6 +39,7 @@
       { "command": "code-scenario.addItem", "title": "Add Item", "icon": "$(add)" },
       { "command": "code-scenario.quickAddCurrentFile", "title": "Quick Add Current File to Scenario" },
         { "command": "code-scenario.quickAddSelectionSymbol", "title": "Quick Add Selected Symbol to Scenario" },
+      { "command": "code-scenario.openItem", "title": "Open Item", "icon": "$(go-to-file)" },
       { "command": "code-scenario.renameItem", "title": "Rename Item" },
       { "command": "code-scenario.moveItem", "title": "Move Item..." },
       { "command": "code-scenario.editItem", "title": "Edit Item" },
@@ -80,6 +81,11 @@
           "group": "inline"
         },
         {
+          "command": "code-scenario.openItem",
+          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "group": "inline"
+        },
+        {
           "command": "code-scenario.renameItem",
           "when": "view == codeScenarioView && viewItem == scenarioItem",
           "group": "1_modify"
@@ -113,6 +119,10 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "code-scenario.openItem",
+          "when": "false"
+        },
         {
           "command": "code-scenario.moveItem",
           "when": "false"
