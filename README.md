@@ -101,3 +101,17 @@ automatically whenever you switch the active editor.
 Auto-reveal is **off by default** to avoid disrupting the tree's scroll position and expanded
 state during normal editing. When enabled it is debounced (300 ms), does not steal keyboard
 focus, and shows no notification when no match is found.
+
+## Item Notes
+
+Each scenario item can carry an optional free-text note. Notes are stored with the item and
+displayed in the item tooltip when you hover over the row in the tree — they do not clutter the
+label or description.
+
+**How to add or edit a note**
+
+Open the **Add Item** or **Edit Item** panel and fill in the **Notes** textarea at the bottom of
+the form. The field accepts multiple lines. Leave it empty to store no note; saving with an empty
+Notes field removes any previously stored note from that item.
+
+Existing items without a note continue to behave exactly as before.

@@ -171,7 +171,7 @@ export class ScenarioProvider
 
     const item = findItemById(scenario.items, itemId);
     if (item) {
-      const { workspaceFolderUri, ...restUpdates } = updates;
+      const { workspaceFolderUri, note, ...restUpdates } = updates;
       Object.assign(item, restUpdates);
 
       if ("workspaceFolderUri" in updates) {
@@ -179,6 +179,14 @@ export class ScenarioProvider
           delete item.workspaceFolderUri;
         } else {
           item.workspaceFolderUri = workspaceFolderUri;
+        }
+      }
+
+      if ("note" in updates) {
+        if (!note) {
+          delete item.note;
+        } else {
+          item.note = note;
         }
       }
 
@@ -446,9 +454,10 @@ export class ScenarioProvider
       const actionHint = location.status === "resolved"
         ? "Click to open in the editor."
         : "Click to review file resolution or edit this item.";
+      const noteSection = node.data.note ? `\n${node.data.note}` : "";
       item.tooltip = hasChildren
-        ? `${node.data.name} (${node.data.type})\n${node.data.filePath}\n${formatCount(node.data.children.length, "child")}\n${actionHint}`
-        : `${node.data.name} (${node.data.type})\n${node.data.filePath}\n${actionHint}`;
+        ? `${node.data.name} (${node.data.type})\n${node.data.filePath}\n${formatCount(node.data.children.length, "child")}${noteSection}\n${actionHint}`
+        : `${node.data.name} (${node.data.type})\n${node.data.filePath}${noteSection}\n${actionHint}`;
       item.iconPath = node.data.kind === "file"
         ? new vscode.ThemeIcon("file")
         : new vscode.ThemeIcon("symbol-function");
