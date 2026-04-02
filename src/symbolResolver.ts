@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import * as path from "path";
 import { ScenarioItemData } from "./scenarioModel";
 
 /**
@@ -9,15 +8,11 @@ import { ScenarioItemData } from "./scenarioModel";
  */
 export async function resolveItemLine(
   item: ScenarioItemData,
-  workspaceRoot: string
+  absolutePath: string
 ): Promise<number> {
   if (item.kind === "file") {
     return 0;
   }
-
-  const absolutePath = path.isAbsolute(item.filePath)
-    ? item.filePath
-    : path.join(workspaceRoot, item.filePath);
 
   const uri = vscode.Uri.file(absolutePath);
 

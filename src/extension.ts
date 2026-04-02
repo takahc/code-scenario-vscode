@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
-import * as path from "path";
 import { ScenarioProvider, ScenarioNode, ItemNode } from "./scenarioProvider";
 import { ScenarioItemData } from "./scenarioModel";
 import { ItemEditorValues, showItemEditor } from "./itemEditorPanel";
+import { getActiveSelectionText } from "./editorContext";
 import { resolveItemLine } from "./symbolResolver";
+import { getActiveWorkspaceFileReference, resolveScenarioItemLocation } from "./workspacePaths";
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new ScenarioProvider(context);
@@ -89,6 +90,85 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.quickAddCurrentFile",
+      async () => {
+        const fileReference = getActiveWorkspaceFileReference();
+        if (!fileReference) {
+          await vscode.window.showWarningMessage(
+            "Open a file from the current workspace, then try Quick Add Current File again."
+          );
+          return;
+        }
+
+        const target = await resolveAddTarget(provider);
+        if (!target) {
+          return;
+        }
+
+        await provider.addItem(
+          target.scenarioId,
+          undefined,
+          createQuickItemData({
+            kind: "file",
+            type: "file",
+            filePath: fileReference.filePath,
+            workspaceFolderUri: fileReference.workspaceFolderUri,
+          })
+        );
+
+        await vscode.window.showInformationMessage(
+          `Added "${fileReference.filePath}" to scenario "${target.scenarioName}".`
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.quickAddSelectionSymbol",
+      async () => {
+        const fileReference = getActiveWorkspaceFileReference();
+        if (!fileReference) {
+          await vscode.window.showWarningMessage(
+            "Open a file from the current workspace, then try Quick Add Selected Symbol to Scenario again."
+          );
+          return;
+        }
+
+        const symbolName = getActiveSelectionText();
+        if (!symbolName) {
+          await vscode.window.showWarningMessage(
+            "Select a single-line symbol-like identifier in the active editor, then try Quick Add Selected Symbol to Scenario again."
+          );
+          return;
+        }
+
+        const target = await resolveAddTarget(provider);
+        if (!target) {
+          return;
+        }
+
+        await provider.addItem(
+          target.scenarioId,
+          undefined,
+          createQuickItemData({
+            kind: "symbol",
+            type: "definition",
+            filePath: fileReference.filePath,
+            workspaceFolderUri: fileReference.workspaceFolderUri,
+            name: symbolName,
+          })
+        );
+
+        await vscode.window.showInformationMessage(
+          `Added "${symbolName}" from "${fileReference.filePath}" to scenario "${target.scenarioName}".`
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.editItem",
       async (node: ItemNode) => {
         const values = await showItemEditor({
@@ -142,20 +222,16 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "code-scenario.openItem",
       async (node: ItemNode) => {
-        const workspaceRoot = getWorkspaceRoot();
-        if (!workspaceRoot) {
+        const location = resolveScenarioItemLocation(node.data);
+        if (!location) {
           vscode.window.showErrorMessage("No workspace folder is open.");
           return;
         }
 
-        const absolutePath = path.isAbsolute(node.data.filePath)
-          ? node.data.filePath
-          : path.join(workspaceRoot, node.data.filePath);
-
-        const uri = vscode.Uri.file(absolutePath);
+        const uri = vscode.Uri.file(location.absolutePath);
 
         // Resolve line number
-        const line = await resolveItemLine(node.data, workspaceRoot);
+        const line = await resolveItemLine(node.data, location.absolutePath);
 
         // Update cached line
         await provider.editItem(node.scenarioId, node.data.id, { line });
@@ -179,14 +255,6 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {}
-
-function getWorkspaceRoot(): string | undefined {
-  const folders = vscode.workspace.workspaceFolders;
-  if (folders && folders.length > 0) {
-    return folders[0].uri.fsPath;
-  }
-  return undefined;
-}
 
 function getScenarioName(provider: ScenarioProvider, scenarioId: string): string {
   return provider.getScenarios().find((scenario) => scenario.id === scenarioId)?.name ?? "Scenario";
@@ -258,13 +326,32 @@ function toScenarioItemData(
 ): Omit<ScenarioItemData, "id" | "children"> {
   const filePath = values.filePath.trim();
   const symbolName = values.symbolName.trim();
-  const kind = symbolName ? "symbol" : "file";
-
-  return {
-    name: kind === "symbol" ? symbolName : filePath,
-    kind,
+  return createQuickItemData({
+    kind: symbolName ? "symbol" : "file",
     type: values.type,
     filePath,
+    ...(symbolName ? { name: symbolName } : {}),
+  });
+}
+
+function createQuickItemData(options: {
+  kind: ScenarioItemData["kind"];
+  type: ScenarioItemData["type"];
+  filePath: string;
+  workspaceFolderUri?: string;
+  name?: string;
+}): Omit<ScenarioItemData, "id" | "children"> {
+  const filePath = options.filePath.trim();
+  const name = (options.name ?? filePath).trim();
+
+  return {
+    name,
+    kind: options.kind,
+    type: options.type,
+    filePath,
+    ...(options.workspaceFolderUri !== undefined
+      ? { workspaceFolderUri: options.workspaceFolderUri }
+      : {}),
     line: -1,
   };
 }
