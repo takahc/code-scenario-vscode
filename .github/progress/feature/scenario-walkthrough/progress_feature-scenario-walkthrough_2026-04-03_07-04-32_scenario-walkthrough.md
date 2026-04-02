@@ -27,12 +27,15 @@ Code Scenario の次の UX 改善候補を比較し、今回の作業単位と�
 - 上記の修正後、compile 成功を確認した。
 - checker の修正後再確認により、empty-scenario stuck 不具合の解消と、現在の作業ツリー上での pre-release 前提の機能妥当性を確認した。
 - checker の最終 release readiness 確認により、`npm run compile` 成功、`npm run lint` は ESLint 設定不在による repo baseline 起因の非ブロッカー失敗、walkthrough 差分に release-blocking な不具合なし、という判定を得た。
+- PM 判断として、`feature/scenario-walkthrough` と `pre-release` の差分が walkthrough 機能の 3 コミットに限定されていることを確認し、release 対象範囲を確定した。
+- pre-release 直前の再確認として、現行 feature ブランチ上で `npm run compile` の成功を再確認した。
+- 作業ツリーに未追跡 `scripts/` が残っているため、既存作業を汚さずに release を進めるための別 worktree で `pre-release` マージを進める方針を決定した。
 
 ## Uncompleted
 - pre-release への反映と preview 公開。
 
 ## Cautions
-walkthrough ロジックに自動テストはまだなく、今回も compile とコードレビュー中心の確認である。将来この経路を拡張する際は `stepWalkthrough` 周辺にテスト追加を検討したい。作業ツリーには今回の変更対象外の未追跡 `scripts/` ディレクトリが存在するため、コミット対象を明示的に限定する。repo 全体の lint は ESLint 設定欠如により baseline で失敗しており、今回機能固有のリグレッション判定とは切り分けて扱う必要がある。
+walkthrough ロジックに自動テストはまだなく、今回も compile とコードレビュー中心の確認である。将来この経路を拡張する際は `stepWalkthrough` 周辺にテスト追加を検討したい。作業ツリーには今回の変更対象外の未追跡 `scripts/` ディレクトリが存在するため、branch switch ではなく別 worktree で pre-release 反映を行う。repo 全体の lint は ESLint 設定欠如により baseline で失敗しており、今回機能固有のリグレッション判定とは切り分けて扱う必要がある。
 
 ## Next Steps
-feature ブランチ上で progress 更新をコミットし、その後 pre-release フローで preview 公開まで進める。
+別 worktree で `feature/scenario-walkthrough` を `pre-release` にマージして push し、GitHub Actions の pre-release publish 実行結果を確認する。
