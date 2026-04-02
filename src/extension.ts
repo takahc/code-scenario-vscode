@@ -530,6 +530,14 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // ── Auto-heal renamed / moved files ──────────────────────────
+
+  context.subscriptions.push(
+    vscode.workspace.onDidRenameFiles(async (event) => {
+      await provider.handleRenameFiles(event.files);
+    })
+  );
+
   // ── Open item in editor ───────────────────────────────────────
 
   context.subscriptions.push(
