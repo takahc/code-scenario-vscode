@@ -21,13 +21,15 @@ Infinity UX loop の次手として、**Quick Add Selected Symbol** 実行時に
 - README に、**Quick Add Selected Symbol to Scenario** 実行時は type picker が表示され、Enter で既定値 `definition` を選び、Escape で追加を中止できることを追記した。
 - checker が受け入れ条件 8 項目を確認し、symbol quick add 以外の導線を変えていないこと、`file` type を出していないこと、選択した type が保存されること、README が実装順序と一致することを確認した。
 - `npm run compile` は成功し、`npm run lint` は既存どおり ESLint 設定ファイル不在の baseline failure のままだと再確認した。
+- 変更一式を progress と合わせて `feat: add symbol type picker` (`d5aaf0d`) として commit し、`origin/feature/quick-add-symbol-type-picker` へ push した。
+- 未追跡の `scripts/` を含む作業ツリーを汚さないため、detached worktree で `feature/quick-add-symbol-type-picker` を `pre-release` へ merge し、`origin/pre-release` の merge commit `70894bf` を push した。
+- `Publish Extension` workflow (run `23922775792`) が成功し、`Publish pre-release extension` step まで完了して version `0.1.36` の preview 公開が走った。
 
 ## Uncompleted
-- commit 作成。
-- pre-release への反映と preview 公開。
+(なし)
 
 ## Cautions
 変更対象は **Quick Add Selected Symbol** の導線に限定し、既存の **Quick Add Current File** や通常の **Add Item** フローを巻き込まないことが重要。type picker の既定値は `definition` を維持し、Quick Add の速さを損なわないことが前提。作業ツリーには未追跡の `scripts/` ディレクトリがあるため commit 対象へ含めない。なお、`npm run lint` は今回の変更とは無関係に ESLint 設定ファイル不在で失敗する状態が続いている。
 
 ## Next Steps
-変更一式と progress を同じ論理単位で commit し、pre-release フローで preview 公開まで進める。
+必要に応じて Marketplace 上の preview 反映を確認し、次の Infinity UX loop 候補の選定へ進む。
