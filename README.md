@@ -41,6 +41,22 @@ Hover over any row in the Code Scenario sidebar to reveal action buttons directl
 
 All of these actions remain available in the right-click context menu as well.
 
+## Repair Stale Item
+
+Use **Repair Stale Item...** to find broken scenario items across every scenario from one place, then jump straight into the existing relink flow.
+
+- If no stale items exist, Code Scenario shows an informational message.
+- If stale items exist, a Quick Pick lists each stale item with its item name, scenario, ancestor path, file path, and stale reason.
+- Selecting a result reveals and selects that item in the Code Scenario tree, then opens the normal **Relink Item** flow for that item.
+- Cancelling the Quick Pick makes no changes.
+
+### How to invoke
+
+| Method | Action |
+|---|---|
+| Tree toolbar | Click the **warning** (⚠) icon in the Code Scenario panel header |
+| Command Palette | `Repair Stale Item...` |
+
 When **Add Item** is invoked without a specific tree row context (for example from the tree toolbar or
 Command Palette), Code Scenario now defaults to the saved **Quick Add target** scenario when that
 target still exists.

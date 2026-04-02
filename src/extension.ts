@@ -5,6 +5,7 @@ import {
   ItemNode,
   TreeNode,
   MoveItemDestination,
+  StaleItemMatch,
 } from "./scenarioProvider";
 import { ScenarioData, ScenarioItemData } from "./scenarioModel";
 import { ItemEditorValues, showItemEditor } from "./itemEditorPanel";
@@ -667,6 +668,45 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("code-scenario.refresh", () => {
       provider.refresh();
     })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.repairStaleItem",
+      async () => {
+        const matches = provider.getStaleItemMatches();
+        if (matches.length === 0) {
+          await vscode.window.showInformationMessage(
+            "There are no stale scenario items to repair."
+          );
+          return;
+        }
+
+        const selected = await vscode.window.showQuickPick(
+          matches.map((match) => ({
+            label: match.node.data.name,
+            description: match.ancestorPath
+              ? `${match.scenarioName} · ${match.ancestorPath}`
+              : match.scenarioName,
+            detail: formatStaleItemRepairDetail(match),
+            match,
+          })),
+          {
+            title: "Repair Stale Item",
+            placeHolder: "Select a stale item to reveal and relink",
+            matchOnDescription: true,
+            matchOnDetail: true,
+          }
+        );
+
+        if (!selected) {
+          return;
+        }
+
+        await revealItemNode(treeView, selected.match.node);
+        await vscode.commands.executeCommand("code-scenario.relinkItem", selected.match.node);
+      }
+    )
   );
 
   context.subscriptions.push(
@@ -1484,6 +1524,15 @@ function formatScenarioItemSearchDetail(match: ScenarioItemMatch): string {
     detailParts.push(match.workspaceFolderName);
   }
   detailParts.push(`Type: ${match.node.data.type}`);
+  return detailParts.join(" · ");
+}
+
+function formatStaleItemRepairDetail(match: StaleItemMatch): string {
+  const detailParts = [match.node.data.filePath];
+  if (match.workspaceFolderName) {
+    detailParts.push(match.workspaceFolderName);
+  }
+  detailParts.push(match.staleReason);
   return detailParts.join(" · ");
 }
 

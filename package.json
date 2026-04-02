@@ -48,6 +48,7 @@
       { "command": "code-scenario.copyItem", "title": "Copy Item..." },
       { "command": "code-scenario.editItem", "title": "Edit Item", "icon": "$(edit)" },
       { "command": "code-scenario.relinkItem", "title": "Relink Item", "icon": "$(link)" },
+      { "command": "code-scenario.repairStaleItem", "title": "Repair Stale Item...", "icon": "$(warning)" },
       { "command": "code-scenario.deleteItem", "title": "Delete Item", "icon": "$(trash)" },
       { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" },
       { "command": "code-scenario.findScenarioItem", "title": "Find Scenario Item...", "icon": "$(search)" },
@@ -100,6 +101,11 @@
         },
         {
           "command": "code-scenario.findScenarioItem",
+          "when": "view == codeScenarioView",
+          "group": "navigation"
+        },
+        {
+          "command": "code-scenario.repairStaleItem",
           "when": "view == codeScenarioView",
           "group": "navigation"
         },
