@@ -28,12 +28,15 @@ status bar から現在の Quick Add target を常時確認・変更・解除で
 - checker の最終確認で、release blocker は解消済みで `pre-release` 取り込み可能と再確認した。一方で README の status bar 説明が単一 scenario 時の `(<name> (auto))` 表示を明示しておらず、preview 前に小さく補完する方針にした。
 - implementer が README の Preview 説明に、単一 scenario かつ target 未保存時は status bar に scenario 名と `(auto)` が表示され自動利用される旨を追記し、status bar の 3 状態が文書上も揃った。
 - README 追記と progress 更新を `docs: clarify quick add auto status` として追加コミットし、feature ブランチの出荷前差分を整理した。
+- feature ブランチを origin へ push した。
+- 未追跡の `scripts/` を避けるため一時 worktree で `origin/pre-release` へ `origin/feature/quick-add-target-status-bar` を `merge: feature/quick-add-target-status-bar into pre-release` として取り込み、push した。
+- `Publish Extension` workflow (run `23919398897`) が成功し、`Publish pre-release extension` step まで完了して preview 公開が走った。
 
 ## Uncompleted
-- push、pre-release 反映、preview 公開。
+(なし)
 
 ## Cautions
 作業ツリーには未追跡の `scripts/` ディレクトリが存在するため、今回のコミット対象に含めないよう注意が必要。status bar は常時表示 UI なので、scenario 未作成時や target 未設定時のノイズを抑えた表示条件に加えて、workspace 再読み込み時の activation も user-facing 品質に直結する。`npm run lint` は今回変更起因ではなく、既存の ESLint 設定ファイル不在により baseline failure のままである。
 
 ## Next Steps
-feature ブランチを push し、pre-release フローへ進める。
+必要に応じて Marketplace 上の pre-release 反映内容を確認し、次の Infinity UX loop の候補選定へ進む。
