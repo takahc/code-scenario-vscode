@@ -22,13 +22,13 @@ Code Scenario の次の UX 改善候補を再評価し、選択中の項目の�
 - checker が差分レビューを行い、scenario 行は既存の `Add Item` のまま・item 行は `Add Child Item` と `Add Item Below` に分離されていること、トップレベル/ネスト両方で同親直後へ挿入されること、追加後の reveal/select が維持されていることを確認した。
 - checker が worktree に依存関係を導入した上で `npm run compile` 成功を確認した。
 - `npm run lint` は ESLint 設定ファイル不在という既存リポジトリ課題で失敗することを再確認した。
+- 変更一式と progress を `feat: add item below command` としてコミットした。
 
 ## Uncompleted
-- コミット作成。
 - pre-release への反映と preview 公開。
 
 ## Cautions
 元の作業ツリーには今回の変更対象外の未追跡 `scripts/` ディレクトリがあるため、以降の作業は別 worktree で進める。今回の確認は compile とコードレビュー中心で、`Add Item Below` の UI 操作感までは自動化されていない。なお `npm run lint` は今回の変更とは無関係に ESLint 設定ファイル不在で失敗する状態が続いている。
 
 ## Next Steps
-変更一式と progress を同じ論理単位でコミットし、pre-release フローで preview 公開まで進める。
+`feature/add-item-below` を `pre-release` に反映し、GitHub Actions による preview 公開結果を確認する。
