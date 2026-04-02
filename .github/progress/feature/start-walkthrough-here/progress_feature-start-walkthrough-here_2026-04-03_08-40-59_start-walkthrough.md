@@ -30,13 +30,16 @@ scenario 行から明示的に walkthrough を開始できるようにし、使�
 - `scripts/` をコミットに含めないよう制御した。
 - `feat: add Start Walkthrough Here command for scenario rows` として feature ブランチにコミットした。
 - checker により、empty / non-empty scenario の両経路と walkthrough 永続化との整合性に問題がないことを確認した。
+- `feature/start-walkthrough-here` を push した。
+- 隔離 worktree 上で `origin/pre-release` に `feature/start-walkthrough-here` をマージし、マージ結果でも `npm run compile` が通ることを確認した。
+- `pre-release` へ push し、GitHub Actions の Publish Extension workflow が成功した。`Publish pre-release extension` ステップまで完了し、pre-release `0.1.46` が公開された。
 
 ## Uncompleted
 - 実装後の checker による手動 E2E 動作確認（拡張機能ホストを起動した実機確認）は未実施のまま。
-- pre-release への反映と preview 公開。
+- 次の UX 改善ループの選定と着手。
 
 ## Cautions
 ワークツリーには今回タスク外の未追跡 `scripts/` が存在するため、コミット対象へ混入させないよう注意する。なお、tree コンテキスト専用コマンドのため `node` 未指定ガードは追加しておらず、これは既存コマンド群と同じパターンに揃えている。
 
 ## Next Steps
-feature ブランチを push し、pre-release マージと preview 公開まで進める。
+次候補として残している `item visited/read state` や `scenario export as Markdown` について、実機の操作確認が必要な粒度かを見極めながら次ループを切る。
