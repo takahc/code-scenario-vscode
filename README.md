@@ -67,6 +67,23 @@ Right-click any file in the VS Code Explorer (sidebar file tree) and choose **Ad
 
 The command appears only for files (not folders) that are inside the current workspace.
 
+## Duplicate-Add Guard
+
+All three Quick Add surfaces (**Quick Add Current File**, **Quick Add Selected Symbol**, and **Add to Scenario from Explorer**) check whether the item already exists in the target scenario before adding it.
+
+- **File duplicate** — detected when the target scenario already has a file item with the same relative path and workspace folder.
+- **Symbol duplicate** — detected when the target scenario already has a symbol item with the same file path, workspace folder, and symbol name.
+
+When a duplicate is detected an information notification appears with two actions:
+
+| Action | Behaviour |
+|---|---|
+| **Reveal** | Scrolls the Code Scenario tree to the existing item and selects it. If multiple matching items exist, a Quick Pick lets you choose which one to reveal. |
+| **Add anyway** | Bypasses the guard and adds the item normally (use this when you intentionally want two entries for the same target). |
+| *(dismiss)* | Closes the notification without adding. |
+
+The check is **scoped to the target scenario only** — adding the same file or symbol to a different scenario is never blocked.
+
 ## Keyboard Shortcuts
 
 The extension contributes the following default keyboard shortcuts for the most common workflows.
