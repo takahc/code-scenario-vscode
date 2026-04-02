@@ -146,6 +146,19 @@ export class ScenarioProvider
     return this.getScenarioById(scenarioId);
   }
 
+  getEffectiveQuickAddScenario(): ScenarioData | undefined {
+    const quickAddScenario = this.getQuickAddScenario();
+    if (quickAddScenario) {
+      return quickAddScenario;
+    }
+
+    if (this.scenarios.length === 1) {
+      return this.scenarios[0];
+    }
+
+    return undefined;
+  }
+
   isQuickAddScenario(scenarioId: string): boolean {
     return this.getQuickAddScenarioId() === scenarioId;
   }

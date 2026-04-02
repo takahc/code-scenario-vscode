@@ -125,6 +125,25 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(treeView);
 
+  const quickAddStatusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100
+  );
+  quickAddStatusBarItem.name = "Code Scenario Quick Add Target";
+  quickAddStatusBarItem.command = "code-scenario.manageQuickAddScenario";
+  context.subscriptions.push(quickAddStatusBarItem);
+
+  const updateQuickAddStatusBar = () => {
+    refreshQuickAddStatusBarItem(quickAddStatusBarItem, provider);
+  };
+
+  context.subscriptions.push(
+    provider.onDidChangeTreeData(() => {
+      updateQuickAddStatusBar();
+    })
+  );
+  updateQuickAddStatusBar();
+
   // ── Commands ──────────────────────────────────────────────────
 
   context.subscriptions.push(
@@ -371,6 +390,15 @@ export function activate(context: vscode.ExtensionContext): void {
         await vscode.window.showInformationMessage(
           `Cleared Quick Add scenario "${node?.data.name ?? quickAddScenario.name}".`
         );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.manageQuickAddScenario",
+      async () => {
+        await showQuickAddScenarioManager(provider);
       }
     )
   );
@@ -838,14 +866,7 @@ async function resolveQuickAddTarget(
     return undefined;
   }
 
-  if (scenarios.length === 1) {
-    return {
-      scenarioId: scenarios[0].id,
-      scenarioName: scenarios[0].name,
-    };
-  }
-
-  const rememberedScenario = provider.getQuickAddScenario();
+  const rememberedScenario = provider.getEffectiveQuickAddScenario();
   if (rememberedScenario) {
     return {
       scenarioId: rememberedScenario.id,
@@ -867,6 +888,78 @@ async function resolveQuickAddTarget(
   };
 }
 
+function refreshQuickAddStatusBarItem(
+  statusBarItem: vscode.StatusBarItem,
+  provider: ScenarioProvider
+): void {
+  const scenarios = provider.getScenarios();
+  if (scenarios.length === 0) {
+    statusBarItem.hide();
+    return;
+  }
+
+  const quickAddScenario = provider.getQuickAddScenario();
+  const effectiveQuickAddScenario = provider.getEffectiveQuickAddScenario();
+
+  if (quickAddScenario) {
+    statusBarItem.text = `$(target) Quick Add: ${quickAddScenario.name}`;
+    statusBarItem.tooltip =
+      `Code Scenario Quick Add target: ${quickAddScenario.name}\n\nClick to change or clear it.`;
+  } else if (effectiveQuickAddScenario) {
+    statusBarItem.text = `$(target) Quick Add: ${effectiveQuickAddScenario.name} (auto)`;
+    statusBarItem.tooltip =
+      `Code Scenario Quick Add will use the only scenario by default: ${effectiveQuickAddScenario.name}\n\nClick to set a saved target.`;
+  } else {
+    statusBarItem.text = "$(target) Quick Add: Select";
+    statusBarItem.tooltip =
+      "Code Scenario Quick Add target is not set.\n\nClick to choose a scenario.";
+  }
+
+  statusBarItem.show();
+}
+
+async function showQuickAddScenarioManager(
+  provider: ScenarioProvider
+): Promise<void> {
+  const scenarios = provider.getScenarios();
+  if (scenarios.length === 0) {
+    await vscode.window.showInformationMessage(
+      "Create a scenario before setting a quick add scenario."
+    );
+    return;
+  }
+
+  const quickAddScenario = provider.getQuickAddScenario();
+  const selection = await vscode.window.showQuickPick(
+    createQuickAddScenarioPicks(scenarios, quickAddScenario),
+    {
+      title: "Manage Quick Add Target",
+      placeHolder: quickAddScenario
+        ? `Current target: ${quickAddScenario.name}`
+        : "Select a scenario for Quick Add",
+      matchOnDescription: true,
+      matchOnDetail: true,
+    }
+  );
+
+  if (!selection) {
+    return;
+  }
+
+  if (selection.action === "clear") {
+    await provider.setQuickAddScenario(undefined);
+    await vscode.window.showInformationMessage(
+      `Cleared Quick Add scenario "${quickAddScenario!.name}".`
+    );
+    return;
+  }
+
+  await provider.setQuickAddScenario(selection.scenario.id);
+  await vscode.window.showInformationMessage(
+    `Quick Add scenario set to "${selection.scenario.name}".`
+  );
+}
+
 async function pickScenario(
   scenarios: ScenarioData[],
   options: {
@@ -885,6 +978,41 @@ async function pickScenario(
 
   return selectedScenario?.scenario;
 }
+
+function createQuickAddScenarioPicks(
+  scenarios: ScenarioData[],
+  quickAddScenario: ScenarioData | undefined
+): QuickAddScenarioPick[] {
+  const picks: QuickAddScenarioPick[] = scenarios.map((scenario) => ({
+    label: scenario.name,
+    description: quickAddScenario?.id === scenario.id
+      ? "Current Quick Add target"
+      : `${scenario.items.length} item${scenario.items.length === 1 ? "" : "s"}`,
+    detail: quickAddScenario?.id === scenario.id
+      ? `${scenario.items.length} item${scenario.items.length === 1 ? "" : "s"}`
+      : undefined,
+    action: "set",
+    scenario,
+  }));
+
+  if (quickAddScenario) {
+    picks.push({
+      label: "$(close) Clear Quick Add Target",
+      description: `Unset "${quickAddScenario.name}"`,
+      action: "clear",
+    });
+  }
+
+  return picks;
+}
+type QuickAddScenarioPick =
+  | (vscode.QuickPickItem & {
+    action: "set";
+    scenario: ScenarioData;
+  })
+  | (vscode.QuickPickItem & {
+    action: "clear";
+  });
 
 async function resolveMoveDestination(
   provider: ScenarioProvider,
