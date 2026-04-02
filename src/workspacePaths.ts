@@ -32,6 +32,19 @@ export interface ValidatedWorkspaceFileInput {
   workspaceFolderUri?: string;
 }
 
+export function validateWorkspaceFileUri(
+  fileUri: vscode.Uri
+): { value?: ValidatedWorkspaceFileInput; error?: string } {
+  if (fileUri.scheme !== "file") {
+    return {
+      error: "Selected file must be on the local filesystem.",
+    };
+  }
+
+  const workspaceFolderUri = vscode.workspace.getWorkspaceFolder(fileUri)?.uri.toString();
+  return validateWorkspaceFileInput(fileUri.fsPath, workspaceFolderUri);
+}
+
 export function getActiveWorkspaceFileReference(): WorkspaceFileReference | undefined {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
