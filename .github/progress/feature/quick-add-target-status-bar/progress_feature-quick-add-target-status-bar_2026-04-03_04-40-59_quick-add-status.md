@@ -27,13 +27,13 @@ status bar から現在の Quick Add target を常時確認・変更・解除で
 - checker が activation 補強後に再確認し、受け入れ条件を満たして commit / pre-release 可能と報告した。
 - checker の最終確認で、release blocker は解消済みで `pre-release` 取り込み可能と再確認した。一方で README の status bar 説明が単一 scenario 時の `(<name> (auto))` 表示を明示しておらず、preview 前に小さく補完する方針にした。
 - implementer が README の Preview 説明に、単一 scenario かつ target 未保存時は status bar に scenario 名と `(auto)` が表示され自動利用される旨を追記し、status bar の 3 状態が文書上も揃った。
+- README 追記と progress 更新を `docs: clarify quick add auto status` として追加コミットし、feature ブランチの出荷前差分を整理した。
 
 ## Uncompleted
-- 追記内容と progress を同じ論理単位でコミットする。
 - push、pre-release 反映、preview 公開。
 
 ## Cautions
 作業ツリーには未追跡の `scripts/` ディレクトリが存在するため、今回のコミット対象に含めないよう注意が必要。status bar は常時表示 UI なので、scenario 未作成時や target 未設定時のノイズを抑えた表示条件に加えて、workspace 再読み込み時の activation も user-facing 品質に直結する。`npm run lint` は今回変更起因ではなく、既存の ESLint 設定ファイル不在により baseline failure のままである。
 
 ## Next Steps
-README 追記と progress を追加コミットし、branch を push したうえで pre-release フローへ進める。
+feature ブランチを push し、pre-release フローへ進める。
