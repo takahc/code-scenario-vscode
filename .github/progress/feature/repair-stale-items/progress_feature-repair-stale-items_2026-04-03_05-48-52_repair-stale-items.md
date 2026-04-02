@@ -23,12 +23,15 @@ Infinity UX loop の次手として、stale item を tree 上で探し回らず�
 - implementer が `README.md` に新しい stale repair workflow を追記し、Command Palette / tree toolbar から stale item を探して relink できることを文書化した。
 - checker が受け入れ条件 10 項目を確認し、command 追加・toolbar 露出・stale logic 再利用・no stale 案内・Quick Pick 文脈表示・reveal + relink 接続・cancel no-op・既存 stale row 動線維持・README 追記を満たすと判定した。
 - `npm run compile` は成功し、`npm run lint` は `origin/pre-release` 時点から継続する ESLint 設定不在の baseline failure であり今回差分の回帰ではないことを checker が確認した。
+- 変更一式を progress と合わせて `feat: add stale item repair command` (`a38ef94`) として commit し、`origin/feature/repair-stale-items` へ push した。
+- clean な `pre-release` worktree を用意して `origin/pre-release` を最新化したうえで、`merge: feature/repair-stale-items into pre-release` (`b4636c9`) として取り込み、`origin/pre-release` へ push した。
+- `Publish Extension` workflow (run `23921778008`) が成功し、`Publish pre-release extension` step まで完了して version `0.1.35` の preview 公開が走った。
 
 ## Uncompleted
-- commit / push / preview 公開。
+(なし)
 
 ## Cautions
-既存の stale 判定・relink・reveal 動線と不整合を起こさないことが重要。修復 UI は既存の relink コマンドを再利用する前提で実装済みだが、VS Code extension host 上での手動 UI 確認までは未実施であり、toolbar 表示や Quick Pick 見え方はコードベース検証中心である。元の repo worktree には未追跡 `scripts/` があるため、以後も commit 対象に混ぜない。
+既存の stale 判定・relink・reveal 動線と不整合を起こさないことが重要。修復 UI は既存の relink コマンドを再利用する前提で実装済みだが、VS Code extension host 上での手動 UI 確認までは未実施であり、toolbar 表示や Quick Pick 見え方はコードベース検証中心である。元の repo worktree には未追跡 `scripts/` があるため、以後も commit 対象に混ぜない。GitHub Actions では Node.js 20 ベース action の deprecation warning が出ており、将来の workflow 保守対象になりうる。
 
 ## Next Steps
-worktree 上の変更と progress をまとめて commit / push し、その後 `pre-release` へ反映して preview 公開フローを実行する。
+必要に応じて Marketplace 上の preview 反映を確認し、次の Infinity UX loop 候補選定へ進む。
