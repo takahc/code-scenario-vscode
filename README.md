@@ -124,14 +124,17 @@ one by one, in depth-first tree order.
     because only one scenario exists), that scenario is used automatically.
   - If multiple scenarios exist and no Quick Add target is set, a Quick Pick prompts you to choose.
 - **Subsequent invocations** — steps forward or backward through the flat item list of the same
-  scenario. The position is remembered for the duration of the session.
+  scenario. The position is remembered and persisted across window reloads and restarts.
 - **Empty scenario** — an informational message is shown and the walkthrough does not advance.
 - **Wrap-around** — stepping past the last item wraps to the first (and vice versa); a brief
   informational message indicates the wrap.
 - After each step the item is opened in the editor (using the normal open behavior) and revealed
   and selected in the Code Scenario tree.
 
-The walkthrough position is **session-only** and is not persisted across window reloads or restarts.
+The walkthrough position is persisted in workspace state across window reloads and restarts.
+When VS Code reopens a workspace where a walkthrough position was saved, a notification prompts
+you to **Resume** (continue from the saved item) or **Restart** (clear the saved position so the
+next invocation starts fresh). Dismissing the notification keeps the saved position unchanged.
 
 ### How to invoke
 
@@ -225,9 +228,10 @@ in the Code Scenario tree — the reverse of clicking an item to open it.
 Use **Find Scenario Item...** to search all stored scenario items from a Quick Pick, then jump to
 the selected result.
 
-- Type part of the **item name**, **scenario name**, and/or **file path**.
+- Type part of the **item name**, **scenario name**, **file path**, or **note text**.
 - Results show the scenario name plus path context to help distinguish similar items.
 - Symbol items display their type (e.g. `definition`, `call`) in the description column next to the file path; file items rely on the file icon to convey kind.
+- Items that have a note show a **✎** indicator at the end of the description row.
 - Selecting a result reveals it in the Code Scenario tree and opens it with the existing item-open
   behavior.
 
@@ -254,8 +258,9 @@ focus, and shows no notification when no match is found.
 ## Item Notes
 
 Each scenario item can carry an optional free-text note. Notes are stored with the item and
-displayed in the item tooltip when you hover over the row in the tree — they do not clutter the
-label or description.
+displayed in the item tooltip when you hover over the row in the tree. Items that have a note
+also show a **✎** indicator appended to the description column, making note presence visible
+at a glance without opening the tooltip.
 
 **How to add or edit a note**
 
