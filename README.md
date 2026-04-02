@@ -1,6 +1,18 @@
 # code-scenario-vscode
 code-scenario-vscode extension
 
+## Tree Inline Actions
+
+Hover over any row in the Code Scenario sidebar to reveal action buttons directly on the row — no right-click needed.
+
+| Row type | Hover buttons |
+|---|---|
+| Scenario | Rename (pencil), Delete (trash), Add Item (+) |
+| Item (normal) | Edit (pencil), Delete (trash), Add Child (+), Open (arrow) |
+| Item (stale ⚠) | Edit (pencil), Delete (trash), Add Child (+), Open (arrow), Relink (link) |
+
+All of these actions remain available in the right-click context menu as well.
+
 ## Keyboard Shortcuts
 
 The extension contributes the following default keyboard shortcuts for the most common workflows.

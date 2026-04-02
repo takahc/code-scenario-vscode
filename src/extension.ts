@@ -203,7 +203,7 @@ export function activate(context: vscode.ExtensionContext): void {
       async (node: ItemNode) => {
         if (!(node instanceof ItemNode)) {
           await vscode.window.showWarningMessage(
-            "Edit Item is only available from an item context menu."
+            "Edit Item requires selecting an item in the Code Scenario sidebar."
           );
           return;
         }
@@ -237,7 +237,7 @@ export function activate(context: vscode.ExtensionContext): void {
       async (node: ItemNode) => {
         if (!(node instanceof ItemNode)) {
           await vscode.window.showWarningMessage(
-            "Relink Item is only available from an item context menu."
+            "Relink Item requires selecting a stale item in the Code Scenario sidebar."
           );
           return;
         }
@@ -301,7 +301,7 @@ export function activate(context: vscode.ExtensionContext): void {
       async (node: ItemNode) => {
         if (!(node instanceof ItemNode)) {
           await vscode.window.showWarningMessage(
-            "Delete Item is only available from an item context menu."
+            "Delete Item requires selecting an item in the Code Scenario sidebar."
           );
           return;
         }

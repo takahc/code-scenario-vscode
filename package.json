@@ -34,17 +34,17 @@
     },
     "commands": [
       { "command": "code-scenario.addScenario", "title": "Add Scenario", "icon": "$(add)" },
-      { "command": "code-scenario.deleteScenario", "title": "Delete Scenario" },
-      { "command": "code-scenario.renameScenario", "title": "Rename Scenario" },
+      { "command": "code-scenario.deleteScenario", "title": "Delete Scenario", "icon": "$(trash)" },
+      { "command": "code-scenario.renameScenario", "title": "Rename Scenario", "icon": "$(edit)" },
       { "command": "code-scenario.addItem", "title": "Add Item", "icon": "$(add)" },
       { "command": "code-scenario.quickAddCurrentFile", "title": "Quick Add Current File to Scenario" },
         { "command": "code-scenario.quickAddSelectionSymbol", "title": "Quick Add Selected Symbol to Scenario" },
       { "command": "code-scenario.openItem", "title": "Open Item", "icon": "$(go-to-file)" },
       { "command": "code-scenario.renameItem", "title": "Rename Item" },
       { "command": "code-scenario.moveItem", "title": "Move Item..." },
-      { "command": "code-scenario.editItem", "title": "Edit Item" },
-      { "command": "code-scenario.relinkItem", "title": "Relink Item" },
-      { "command": "code-scenario.deleteItem", "title": "Delete Item" },
+      { "command": "code-scenario.editItem", "title": "Edit Item", "icon": "$(edit)" },
+      { "command": "code-scenario.relinkItem", "title": "Relink Item", "icon": "$(link)" },
+      { "command": "code-scenario.deleteItem", "title": "Delete Item", "icon": "$(trash)" },
       { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" }
     ],
     "keybindings": [
@@ -86,12 +86,32 @@
         {
           "command": "code-scenario.renameScenario",
           "when": "view == codeScenarioView && viewItem == scenario",
+          "group": "inline"
+        },
+        {
+          "command": "code-scenario.deleteScenario",
+          "when": "view == codeScenarioView && viewItem == scenario",
+          "group": "inline"
+        },
+        {
+          "command": "code-scenario.renameScenario",
+          "when": "view == codeScenarioView && viewItem == scenario",
           "group": "1_modify"
         },
         {
           "command": "code-scenario.deleteScenario",
           "when": "view == codeScenarioView && viewItem == scenario",
           "group": "1_modify"
+        },
+        {
+          "command": "code-scenario.editItem",
+          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "group": "inline"
+        },
+        {
+          "command": "code-scenario.deleteItem",
+          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "group": "inline"
         },
         {
           "command": "code-scenario.addItem",
