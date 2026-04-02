@@ -40,6 +40,7 @@
       { "command": "code-scenario.quickAddCurrentFile", "title": "Quick Add Current File to Scenario" },
         { "command": "code-scenario.quickAddSelectionSymbol", "title": "Quick Add Selected Symbol to Scenario" },
       { "command": "code-scenario.renameItem", "title": "Rename Item" },
+      { "command": "code-scenario.moveItem", "title": "Move Item..." },
       { "command": "code-scenario.editItem", "title": "Edit Item" },
       { "command": "code-scenario.deleteItem", "title": "Delete Item" },
       { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" }
@@ -89,6 +90,11 @@
           "group": "1_modify"
         },
         {
+          "command": "code-scenario.moveItem",
+          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "group": "1_modify"
+        },
+        {
           "command": "code-scenario.deleteItem",
           "when": "view == codeScenarioView && viewItem == scenarioItem",
           "group": "1_modify"
@@ -104,6 +110,12 @@
           "command": "code-scenario.quickAddSelectionSymbol",
           "when": "editorTextFocus && editorHasSelection",
           "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "code-scenario.moveItem",
+          "when": "false"
         }
       ]
     }

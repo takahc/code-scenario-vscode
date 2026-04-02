@@ -18,6 +18,18 @@ export class ItemNode {
   ) {}
 }
 
+export interface MoveItemDestination {
+  scenarioId: string;
+  parentItemId?: string;
+  label: string;
+  description?: string;
+  detail?: string;
+}
+
+export type MoveItemResult =
+  | { ok: true }
+  | { ok: false; reason: string };
+
 export class ScenarioProvider
   implements vscode.TreeDataProvider<TreeNode>
 {
@@ -141,6 +153,108 @@ export class ScenarioProvider
     this.refresh();
   }
 
+  getMoveItemDestinations(
+    sourceScenarioId: string,
+    itemId: string
+  ): MoveItemDestination[] {
+    const sourceScenario = this.scenarios.find((scenario) => scenario.id === sourceScenarioId);
+    if (!sourceScenario) {
+      return [];
+    }
+
+    const sourceEntry = findItemEntry(sourceScenario.items, itemId);
+    if (!sourceEntry) {
+      return [];
+    }
+
+    const blockedIds = new Set(collectItemIds(sourceEntry.item));
+
+    return this.scenarios.flatMap((scenario) => {
+      const destinations: MoveItemDestination[] = [];
+      const isCurrentRoot = scenario.id === sourceScenarioId && sourceEntry.parent === undefined;
+      if (!isCurrentRoot) {
+        destinations.push({
+          scenarioId: scenario.id,
+          label: `${scenario.name} › (scenario root)`,
+          description: "Append as a top-level item",
+          detail: `Scenario: ${scenario.name}`,
+        });
+      }
+
+      const itemDestinations = collectMoveDestinations(
+        scenario.items,
+        scenario,
+        blockedIds,
+        sourceScenarioId,
+        sourceEntry.parent?.id
+      );
+
+      destinations.push(...itemDestinations);
+      return destinations;
+    });
+  }
+
+  async moveItem(
+    sourceScenarioId: string,
+    itemId: string,
+    destinationScenarioId: string,
+    destinationParentItemId?: string
+  ): Promise<MoveItemResult> {
+    const sourceScenario = this.scenarios.find((scenario) => scenario.id === sourceScenarioId);
+    if (!sourceScenario) {
+      return { ok: false, reason: "Source scenario was not found." };
+    }
+
+    const sourceEntry = findItemEntry(sourceScenario.items, itemId);
+    if (!sourceEntry) {
+      return { ok: false, reason: "Item to move was not found." };
+    }
+
+    const destinationScenario = this.scenarios.find((scenario) => scenario.id === destinationScenarioId);
+    if (!destinationScenario) {
+      return { ok: false, reason: "Destination scenario was not found." };
+    }
+
+    const currentParentId = sourceEntry.parent?.id;
+    if (
+      sourceScenarioId === destinationScenarioId &&
+      currentParentId === destinationParentItemId
+    ) {
+      return { ok: false, reason: "Select a different destination." };
+    }
+
+    const blockedIds = new Set(collectItemIds(sourceEntry.item));
+    if (destinationParentItemId && blockedIds.has(destinationParentItemId)) {
+      return { ok: false, reason: "An item cannot be moved into itself or one of its descendants." };
+    }
+
+    let destinationChildren: ScenarioItemData[];
+    if (destinationParentItemId) {
+      const destinationParent = findItemById(destinationScenario.items, destinationParentItemId);
+      if (!destinationParent) {
+        return { ok: false, reason: "Destination parent item was not found." };
+      }
+      destinationChildren = destinationParent.children;
+    } else {
+      destinationChildren = destinationScenario.items;
+    }
+
+    const sourceChildren = sourceEntry.parent
+      ? sourceEntry.parent.children
+      : sourceScenario.items;
+    const sourceIndex = sourceChildren.findIndex((item) => item.id === itemId);
+    if (sourceIndex === -1) {
+      return { ok: false, reason: "Item to move was not found." };
+    }
+
+    const [movedItem] = sourceChildren.splice(sourceIndex, 1);
+    destinationChildren.push(movedItem);
+
+    await this.save();
+    this.refresh();
+    return { ok: true };
+  }
+
   // ── TreeDataProvider ─────────────────────────────────────────
 
   getTreeItem(node: TreeNode): vscode.TreeItem {
@@ -242,6 +356,71 @@ function findItemById(
     if (found) { return found; }
   }
   return undefined;
+}
+
+function findItemEntry(
+  items: ScenarioItemData[],
+  id: string,
+  parent?: ScenarioItemData
+): { item: ScenarioItemData; parent?: ScenarioItemData } | undefined {
+  for (const item of items) {
+    if (item.id === id) {
+      return { item, parent };
+    }
+
+    const found = findItemEntry(item.children, id, item);
+    if (found) {
+      return found;
+    }
+  }
+
+  return undefined;
+}
+
+function collectItemIds(item: ScenarioItemData): string[] {
+  return [
+    item.id,
+    ...item.children.flatMap((child) => collectItemIds(child)),
+  ];
+}
+
+function collectMoveDestinations(
+  items: ScenarioItemData[],
+  scenario: ScenarioData,
+  blockedIds: Set<string>,
+  sourceScenarioId: string,
+  currentParentId?: string,
+  ancestorNames: string[] = []
+): MoveItemDestination[] {
+  return items.flatMap((item) => {
+    const nextPath = [...ancestorNames, item.name];
+    const destinations: MoveItemDestination[] = [];
+    const isBlocked = blockedIds.has(item.id);
+    const isCurrentParent = scenario.id === sourceScenarioId && item.id === currentParentId;
+
+    if (!isBlocked && !isCurrentParent) {
+      destinations.push({
+        scenarioId: scenario.id,
+        parentItemId: item.id,
+        label: `${scenario.name} › ${nextPath.join(" › ")}`,
+        description: "Append as a child item",
+        detail: `${item.filePath} · ${item.type}`,
+      });
+    }
+
+    destinations.push(
+      ...collectMoveDestinations(
+        item.children,
+        scenario,
+        blockedIds,
+        sourceScenarioId,
+        currentParentId,
+        nextPath
+      )
+    );
+
+    return destinations;
+  });
 }
 
 function removeItemById(

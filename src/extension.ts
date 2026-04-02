@@ -1,5 +1,10 @@
 import * as vscode from "vscode";
-import { ScenarioProvider, ScenarioNode, ItemNode } from "./scenarioProvider";
+import {
+  ScenarioProvider,
+  ScenarioNode,
+  ItemNode,
+  MoveItemDestination,
+} from "./scenarioProvider";
 import { ScenarioItemData } from "./scenarioModel";
 import { ItemEditorValues, showItemEditor } from "./itemEditorPanel";
 import { getActiveSelectionText } from "./editorContext";
@@ -216,6 +221,36 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.moveItem",
+      async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Move Item is only available from an item context menu."
+          );
+          return;
+        }
+
+        const destination = await resolveMoveDestination(provider, node);
+        if (!destination) {
+          return;
+        }
+
+        const result = await provider.moveItem(
+          node.scenarioId,
+          node.data.id,
+          destination.scenarioId,
+          destination.parentItemId
+        );
+
+        if (!result.ok) {
+          await vscode.window.showWarningMessage(result.reason);
+        }
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.deleteItem",
       async (node: ItemNode) => {
         const confirm = await vscode.window.showWarningMessage(
@@ -357,6 +392,26 @@ async function resolveAddTarget(
     scenarioId: selectedScenario.scenario.id,
     scenarioName: selectedScenario.scenario.name,
   };
+}
+
+async function resolveMoveDestination(
+  provider: ScenarioProvider,
+  node: ItemNode
+): Promise<MoveItemDestination | undefined> {
+  const destinations = provider.getMoveItemDestinations(node.scenarioId, node.data.id);
+  if (destinations.length === 0) {
+    await vscode.window.showInformationMessage(
+      "No valid destination is available for this item."
+    );
+    return undefined;
+  }
+
+  return vscode.window.showQuickPick(destinations, {
+    title: "Move Item",
+    placeHolder: `Select a destination for "${node.data.name}"`,
+    matchOnDescription: true,
+    matchOnDetail: true,
+  });
 }
 
 function toScenarioItemData(
