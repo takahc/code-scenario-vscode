@@ -26,13 +26,15 @@ Code Scenario の次の UX 改善として、walkthrough の継続性と item no
 - `npm run compile` でコンパイルエラーなしを確認した。`npm run lint` は設定ファイル未配置による既存不具合のため実行不可（pre-existing failure）。
 - 実装内容を `feature/walkthrough-continuity` ブランチへ 1 コミットとしてまとめた。
 - checker により、今回の 4 点（位置永続化 / Resume・Restart プロンプト / note インジケータ / note 検索）が意図どおり実装されていることを確認した。
+- `feature/walkthrough-continuity` を push した。
+- 隔離 worktree 上で `origin/pre-release` に `feature/walkthrough-continuity` をマージし、マージ結果でも `npm run compile` が通ることを確認した。
+- `pre-release` へ push し、GitHub Actions の Publish Extension workflow が成功した。`Publish pre-release extension` ステップまで完了し、pre-release `0.1.45` が公開された。
 
 ## Uncompleted
-- feature ブランチの push。
-- pre-release への反映と preview 公開。
+- 次の UX 改善ループの選定と着手。
 
 ## Cautions
 ワークツリーには今回タスク外の未追跡 `scripts/` が存在するため、コミット対象へ混入させないよう注意する。なお、保存済み walkthrough 位置の Resume/Restart 通知が表示中にユーザーがすぐ次/前移動を実行すると、その後の Restart が「進んだあとの位置」を消す形になる可能性があるが、checker 判断では出荷を妨げるものではない。
 
 ## Next Steps
-feature ブランチを push し、pre-release フローで preview 公開まで進める。
+次候補として残している「item visited/read state」または「scenario export as Markdown」のどちらを次ループで進めるかを決め、最新 `pre-release` から新しい作業ブランチを切る。
