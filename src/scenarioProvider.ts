@@ -37,6 +37,39 @@ export type CopyItemResult =
   | { ok: true; itemId: string }
   | { ok: false; reason: string };
 
+interface DeletionPosition {
+  index: number;
+  previousSiblingId?: string;
+  nextSiblingId?: string;
+}
+
+interface DeletedScenarioEntry {
+  token: string;
+  kind: "scenario";
+  scenario: ScenarioData;
+  position: DeletionPosition;
+  restoreQuickAddTarget: boolean;
+}
+
+interface DeletedItemEntry {
+  token: string;
+  kind: "item";
+  item: ScenarioItemData;
+  scenarioId: string;
+  parentItemId?: string;
+  position: DeletionPosition;
+}
+
+type DeletedEntry = DeletedScenarioEntry | DeletedItemEntry;
+
+export type UndoDeleteResult =
+  | { ok: true }
+  | { ok: false; reason: string };
+
+type InsertionIndexResult =
+  | { ok: true; index: number }
+  | { ok: false; reason: string };
+
 export class ScenarioProvider
   implements vscode.TreeDataProvider<TreeNode>
 {
@@ -44,6 +77,7 @@ export class ScenarioProvider
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   private scenarios: ScenarioData[] = [];
+  private latestDeleted?: DeletedEntry;
 
   constructor(private readonly context: vscode.ExtensionContext) {
     this.load();
@@ -135,13 +169,32 @@ export class ScenarioProvider
     this.refresh();
   }
 
-  async deleteScenario(scenarioId: string): Promise<void> {
-    this.scenarios = this.scenarios.filter((s) => s.id !== scenarioId);
-    if (this.isQuickAddScenario(scenarioId)) {
+  async deleteScenario(scenarioId: string): Promise<string | undefined> {
+    const scenarioIndex = this.scenarios.findIndex((scenario) => scenario.id === scenarioId);
+    if (scenarioIndex === -1) {
+      return undefined;
+    }
+
+    const deletedScenario = this.scenarios[scenarioIndex];
+    this.latestDeleted = {
+      token: generateId(),
+      kind: "scenario",
+      scenario: cloneScenario(deletedScenario),
+      position: {
+        index: scenarioIndex,
+        previousSiblingId: this.scenarios[scenarioIndex - 1]?.id,
+        nextSiblingId: this.scenarios[scenarioIndex + 1]?.id,
+      },
+      restoreQuickAddTarget: this.isQuickAddScenario(scenarioId),
+    };
+
+    this.scenarios.splice(scenarioIndex, 1);
+    if (this.latestDeleted.restoreQuickAddTarget) {
       await this.context.workspaceState.update(QUICK_ADD_SCENARIO_ID_KEY, undefined);
     }
     await this.save();
     this.refresh();
+    return this.latestDeleted.token;
   }
 
   async renameScenario(scenarioId: string, newName: string): Promise<void> {
@@ -214,13 +267,123 @@ export class ScenarioProvider
     }
   }
 
-  async deleteItem(scenarioId: string, itemId: string): Promise<void> {
+  async deleteItem(scenarioId: string, itemId: string): Promise<string | undefined> {
     const scenario = this.scenarios.find((s) => s.id === scenarioId);
-    if (!scenario) { return; }
+    if (!scenario) { return undefined; }
 
-    scenario.items = removeItemById(scenario.items, itemId);
+    const entry = findItemEntry(scenario.items, itemId);
+    if (!entry) {
+      return undefined;
+    }
+
+    const siblings = entry.parent ? entry.parent.children : scenario.items;
+    const itemIndex = siblings.findIndex((item) => item.id === itemId);
+    if (itemIndex === -1) {
+      return undefined;
+    }
+
+    this.latestDeleted = {
+      token: generateId(),
+      kind: "item",
+      item: cloneItem(entry.item),
+      scenarioId,
+      parentItemId: entry.parent?.id,
+      position: {
+        index: itemIndex,
+        previousSiblingId: siblings[itemIndex - 1]?.id,
+        nextSiblingId: siblings[itemIndex + 1]?.id,
+      },
+    };
+
+    siblings.splice(itemIndex, 1);
     await this.save();
     this.refresh();
+    return this.latestDeleted.token;
+  }
+
+  async undoDelete(token: string): Promise<UndoDeleteResult> {
+    if (!this.latestDeleted || this.latestDeleted.token !== token) {
+      return {
+        ok: false,
+        reason: "This delete can no longer be undone because a newer delete replaced it.",
+      };
+    }
+
+    const deletedEntry = this.latestDeleted;
+    this.latestDeleted = undefined;
+
+    if (deletedEntry.kind === "scenario") {
+      const existingScenario = this.getScenarioById(deletedEntry.scenario.id);
+      if (existingScenario) {
+        return {
+          ok: false,
+          reason: "Undo is no longer available because the deleted scenario already exists.",
+        };
+      }
+
+      const insertionIndex = resolveInsertionIndex(
+        this.scenarios,
+        deletedEntry.position,
+        "Undo is no longer available because the original scenario position changed."
+      );
+      if (!insertionIndex.ok) {
+        return insertionIndex;
+      }
+
+      this.scenarios.splice(insertionIndex.index, 0, cloneScenario(deletedEntry.scenario));
+      if (deletedEntry.restoreQuickAddTarget) {
+        await this.context.workspaceState.update(
+          QUICK_ADD_SCENARIO_ID_KEY,
+          deletedEntry.scenario.id
+        );
+      }
+      await this.save();
+      this.refresh();
+      return { ok: true };
+    }
+
+    const scenario = this.getScenarioById(deletedEntry.scenarioId);
+    if (!scenario) {
+      return {
+        ok: false,
+        reason: "Undo is no longer available because the original scenario no longer exists.",
+      };
+    }
+
+    let siblings: ScenarioItemData[];
+    if (deletedEntry.parentItemId) {
+      const parent = findItemById(scenario.items, deletedEntry.parentItemId);
+      if (!parent) {
+        return {
+          ok: false,
+          reason: "Undo is no longer available because the original parent item no longer exists.",
+        };
+      }
+      siblings = parent.children;
+    } else {
+      siblings = scenario.items;
+    }
+
+    if (findItemById(scenario.items, deletedEntry.item.id)) {
+      return {
+        ok: false,
+        reason: "Undo is no longer available because the deleted item already exists.",
+      };
+    }
+
+    const insertionIndex = resolveInsertionIndex(
+      siblings,
+      deletedEntry.position,
+      "Undo is no longer available because the original item position changed."
+    );
+    if (!insertionIndex.ok) {
+      return insertionIndex;
+    }
+
+    siblings.splice(insertionIndex.index, 0, cloneItem(deletedEntry.item));
+    await this.save();
+    this.refresh();
+    return { ok: true };
   }
 
   getMoveItemDestinations(
@@ -733,15 +896,6 @@ function collectMoveDestinations(
   });
 }
 
-function removeItemById(
-  items: ScenarioItemData[],
-  id: string
-): ScenarioItemData[] {
-  return items
-    .filter((i) => i.id !== id)
-    .map((i) => ({ ...i, children: removeItemById(i.children, id) }));
-}
-
 function countScenarioItems(scenario: ScenarioData): number {
   return countNestedItems(scenario.items);
 }
@@ -767,6 +921,59 @@ function cloneItemWithFreshIds(item: ScenarioItemData): ScenarioItemData {
     id: generateId(),
     children: item.children.map((child) => cloneItemWithFreshIds(child)),
   };
+}
+
+function cloneScenario(scenario: ScenarioData): ScenarioData {
+  return {
+    ...scenario,
+    items: scenario.items.map((item) => cloneItem(item)),
+  };
+}
+
+function cloneItem(item: ScenarioItemData): ScenarioItemData {
+  return {
+    ...item,
+    children: item.children.map((child) => cloneItem(child)),
+  };
+}
+
+function resolveInsertionIndex<T extends { id: string }>(
+  siblings: T[],
+  position: DeletionPosition,
+  positionChangedReason: string
+): InsertionIndexResult {
+  const { previousSiblingId, nextSiblingId, index } = position;
+
+  if (previousSiblingId && nextSiblingId) {
+    const previousIndex = siblings.findIndex((item) => item.id === previousSiblingId);
+    const nextIndex = siblings.findIndex((item) => item.id === nextSiblingId);
+    if (previousIndex === -1 || nextIndex === -1 || nextIndex !== previousIndex + 1) {
+      return { ok: false, reason: positionChangedReason };
+    }
+    return { ok: true, index: nextIndex };
+  }
+
+  if (previousSiblingId) {
+    const previousIndex = siblings.findIndex((item) => item.id === previousSiblingId);
+    if (previousIndex === -1 || previousIndex !== siblings.length - 1) {
+      return { ok: false, reason: positionChangedReason };
+    }
+    return { ok: true, index: previousIndex + 1 };
+  }
+
+  if (nextSiblingId) {
+    const nextIndex = siblings.findIndex((item) => item.id === nextSiblingId);
+    if (nextIndex === -1 || nextIndex !== 0) {
+      return { ok: false, reason: positionChangedReason };
+    }
+    return { ok: true, index: nextIndex };
+  }
+
+  if (index > siblings.length) {
+    return { ok: false, reason: positionChangedReason };
+  }
+
+  return { ok: true, index };
 }
 
 function formatCount(count: number, noun: string): string {
