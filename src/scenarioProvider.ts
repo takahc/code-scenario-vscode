@@ -813,9 +813,10 @@ export class ScenarioProvider
       item.id = node.data.id;
       item.contextValue = shouldUseWarningStyling(location) ? "scenarioItemStale" : "scenarioItem";
       const typePrefix = node.data.kind === "symbol" ? `${node.data.type} · ` : "";
+      const noteSuffix = node.data.note ? " · ✎" : "";
       item.description = hasChildren
-        ? `${typePrefix}${node.data.filePath} · ${formatCount(node.data.children.length, "child")}`
-        : `${typePrefix}${node.data.filePath}`;
+        ? `${typePrefix}${node.data.filePath} · ${formatCount(node.data.children.length, "child")}${noteSuffix}`
+        : `${typePrefix}${node.data.filePath}${noteSuffix}`;
       const actionHint = location.status === "resolved"
         ? "Click to open in the editor."
         : "Click to review file resolution or edit this item.";

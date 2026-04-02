@@ -902,23 +902,49 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
-  // ── Walkthrough position (session-only, not persisted) ───────
+  // ── Walkthrough position (persisted across sessions) ─────────
 
-  let walkthroughPosition: { scenarioId: string; itemId: string } | undefined;
+  const WALKTHROUGH_POSITION_KEY = "walkthroughPosition";
+
+  let walkthroughPosition: { scenarioId: string; itemId: string } | undefined =
+    context.workspaceState.get<{ scenarioId: string; itemId: string }>(WALKTHROUGH_POSITION_KEY);
+
+  const setWalkthroughPosition = (pos: { scenarioId: string; itemId: string } | undefined): void => {
+    walkthroughPosition = pos;
+    void context.workspaceState.update(WALKTHROUGH_POSITION_KEY, pos);
+  };
+
+  // If a persisted walkthrough position exists, prompt the user to resume or restart.
+  if (walkthroughPosition) {
+    const savedPos = walkthroughPosition;
+    const walkthroughScenario = provider.getScenarioById(savedPos.scenarioId);
+    if (walkthroughScenario) {
+      void (async () => {
+        const action = await vscode.window.showInformationMessage(
+          `Resume walkthrough in "${walkthroughScenario.name}" from where you left off?`,
+          "Resume",
+          "Restart"
+        );
+        if (action === "Restart") {
+          setWalkthroughPosition(undefined);
+        }
+        // "Resume" keeps the persisted position; dismiss also keeps it.
+      })();
+    } else {
+      // Scenario no longer exists — clear silently.
+      setWalkthroughPosition(undefined);
+    }
+  }
 
   context.subscriptions.push(
     vscode.commands.registerCommand("code-scenario.nextItem", async () => {
-      await stepWalkthrough("next", walkthroughPosition, provider, treeView, (pos) => {
-        walkthroughPosition = pos;
-      });
+      await stepWalkthrough("next", walkthroughPosition, provider, treeView, setWalkthroughPosition);
     })
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("code-scenario.previousItem", async () => {
-      await stepWalkthrough("prev", walkthroughPosition, provider, treeView, (pos) => {
-        walkthroughPosition = pos;
-      });
+      await stepWalkthrough("prev", walkthroughPosition, provider, treeView, setWalkthroughPosition);
     })
   );
 
@@ -1696,6 +1722,9 @@ function formatScenarioItemSearchDetail(match: ScenarioItemMatch): string {
     detailParts.push(match.workspaceFolderName);
   }
   detailParts.push(`Type: ${match.node.data.type}`);
+  if (match.node.data.note) {
+    detailParts.push(match.node.data.note);
+  }
   return detailParts.join(" · ");
 }
 
