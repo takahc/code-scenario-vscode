@@ -3,6 +3,7 @@ import {
   ScenarioProvider,
   ScenarioNode,
   ItemNode,
+  TreeNode,
   MoveItemDestination,
 } from "./scenarioProvider";
 import { ScenarioData, ScenarioItemData } from "./scenarioModel";
@@ -15,12 +16,81 @@ import {
   ScenarioItemLocationResolution,
 } from "./workspacePaths";
 
+/** MIME type used for internal tree drag-and-drop. */
+const DRAG_MIME = "application/vnd.code-scenario-item";
+
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new ScenarioProvider(context);
 
-  const treeView = vscode.window.createTreeView("codeScenarioView", {
+  // treeView is assigned immediately below; the `!` suppresses the definite-
+  // assignment error inside the DnD controller closure.
+  // eslint-disable-next-line prefer-const
+  let treeView!: vscode.TreeView<TreeNode>;
+
+  // ── Drag-and-drop controller ──────────────────────────────────
+
+  const dndController: vscode.TreeDragAndDropController<TreeNode> = {
+    dragMimeTypes: [DRAG_MIME],
+    dropMimeTypes: [DRAG_MIME],
+
+    handleDrag(
+      source: readonly TreeNode[],
+      dataTransfer: vscode.DataTransfer
+    ): void {
+      // Only item nodes are draggable; ignore scenario nodes and mixed selections
+      const itemNodes = source.filter((n): n is ItemNode => n.kind === "item");
+      if (itemNodes.length === 0) { return; }
+      // v1: single-item drag (multi-drag is out of scope)
+      const node = itemNodes[0];
+      dataTransfer.set(
+        DRAG_MIME,
+        new vscode.DataTransferItem({ scenarioId: node.scenarioId, itemId: node.data.id })
+      );
+    },
+
+    async handleDrop(
+      target: TreeNode | undefined,
+      dataTransfer: vscode.DataTransfer
+    ): Promise<void> {
+      const transferItem = dataTransfer.get(DRAG_MIME);
+      if (!transferItem) { return; }
+
+      const { scenarioId, itemId } = transferItem.value as { scenarioId: string; itemId: string };
+
+      // Drop onto empty space — no-op
+      if (!target) { return; }
+
+      if (target.kind === "scenario") {
+        // Move to the scenario root; append at the end
+        const result = await provider.moveItem(scenarioId, itemId, target.data.id, undefined);
+        if (!result.ok) {
+          if (result.isNoOp) { return; }
+          await vscode.window.showWarningMessage(result.reason);
+          return;
+        }
+        await revealDroppedItem(provider, treeView, target.data.id, itemId);
+      } else {
+        // target.kind === "item": insert the dragged item immediately after the target item
+        const result = await provider.moveItemAfterSibling(
+          scenarioId,
+          itemId,
+          target.scenarioId,
+          target.data.id
+        );
+        if (!result.ok) {
+          if (result.isNoOp) { return; }
+          await vscode.window.showWarningMessage(result.reason);
+          return;
+        }
+        await revealDroppedItem(provider, treeView, target.scenarioId, itemId);
+      }
+    },
+  };
+
+  treeView = vscode.window.createTreeView("codeScenarioView", {
     treeDataProvider: provider,
     showCollapseAll: true,
+    dragAndDropController: dndController,
   });
 
   context.subscriptions.push(treeView);
@@ -659,6 +729,27 @@ function formatLocationMessage(
   }
 
   return `Source file "${location.filePath}" was not found. Edit the item to choose the correct file.`;
+}
+
+// ── DnD reveal helper ─────────────────────────────────────────
+
+async function revealDroppedItem(
+  provider: ScenarioProvider,
+  treeView: vscode.TreeView<TreeNode>,
+  scenarioId: string,
+  itemId: string
+): Promise<void> {
+  const data = provider.findItem(scenarioId, itemId);
+  if (!data) { return; }
+  try {
+    await treeView.reveal(new ItemNode(data, scenarioId), {
+      select: true,
+      focus: false,
+      expand: true,
+    });
+  } catch {
+    // reveal can throw if the view is not visible; swallow silently
+  }
 }
 
 // ── Reveal helpers ────────────────────────────────────────────

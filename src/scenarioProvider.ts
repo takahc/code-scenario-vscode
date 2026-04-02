@@ -28,7 +28,7 @@ export interface MoveItemDestination {
 
 export type MoveItemResult =
   | { ok: true }
-  | { ok: false; reason: string };
+  | { ok: false; reason: string; isNoOp?: boolean };
 
 export class ScenarioProvider
   implements vscode.TreeDataProvider<TreeNode>
@@ -220,7 +220,20 @@ export class ScenarioProvider
       sourceScenarioId === destinationScenarioId &&
       currentParentId === destinationParentItemId
     ) {
-      return { ok: false, reason: "Select a different destination." };
+      // For a scenario-root drop (no parent on either side) only skip when the
+      // item is already the last top-level entry — moving it to the end would
+      // be a true no-op.  For any named-parent destination the existing guard
+      // is correct: same parent means nothing would change.
+      if (destinationParentItemId === undefined) {
+        const rootItems = sourceScenario.items;
+        const isAlreadyLast = rootItems[rootItems.length - 1]?.id === itemId;
+        if (isAlreadyLast) {
+          return { ok: false, reason: "Select a different destination.", isNoOp: true };
+        }
+        // Fall through: item exists in the root but is not last — let the move proceed.
+      } else {
+        return { ok: false, reason: "Select a different destination.", isNoOp: true };
+      }
     }
 
     const blockedIds = new Set(collectItemIds(sourceEntry.item));
@@ -249,6 +262,94 @@ export class ScenarioProvider
 
     const [movedItem] = sourceChildren.splice(sourceIndex, 1);
     destinationChildren.push(movedItem);
+
+    await this.save();
+    this.refresh();
+    return { ok: true };
+  }
+
+  findItem(scenarioId: string, itemId: string): ScenarioItemData | undefined {
+    const scenario = this.scenarios.find((s) => s.id === scenarioId);
+    if (!scenario) { return undefined; }
+    return findItemById(scenario.items, itemId);
+  }
+
+  /**
+   * Moves `itemId` (from `sourceScenarioId`) so that it becomes the immediate
+   * sibling right after `targetItemId` (in `targetScenarioId`).
+   * The dragged item's subtree is preserved.
+   */
+  async moveItemAfterSibling(
+    sourceScenarioId: string,
+    itemId: string,
+    targetScenarioId: string,
+    targetItemId: string,
+  ): Promise<MoveItemResult> {
+    const sourceScenario = this.scenarios.find((s) => s.id === sourceScenarioId);
+    if (!sourceScenario) {
+      return { ok: false, reason: "Source scenario was not found." };
+    }
+
+    const sourceEntry = findItemEntry(sourceScenario.items, itemId);
+    if (!sourceEntry) {
+      return { ok: false, reason: "Item to move was not found." };
+    }
+
+    const targetScenario = this.scenarios.find((s) => s.id === targetScenarioId);
+    if (!targetScenario) {
+      return { ok: false, reason: "Target scenario was not found." };
+    }
+
+    const targetEntry = findItemEntry(targetScenario.items, targetItemId);
+    if (!targetEntry) {
+      return { ok: false, reason: "Target item was not found." };
+    }
+
+    // Self-drop
+    if (itemId === targetItemId) {
+      return { ok: false, reason: "", isNoOp: true };
+    }
+
+    // Descendant-drop: reject with warning
+    const blockedIds = new Set(collectItemIds(sourceEntry.item));
+    if (blockedIds.has(targetItemId)) {
+      return { ok: false, reason: "An item cannot be moved into itself or one of its descendants." };
+    }
+
+    // Resolve the array that contains the target item
+    const targetSiblings: ScenarioItemData[] = targetEntry.parent
+      ? targetEntry.parent.children
+      : targetScenario.items;
+
+    // No-op: dragged item is already the immediate successor of target
+    const isSameScenario = sourceScenarioId === targetScenarioId;
+    const isSameParent = sourceEntry.parent?.id === targetEntry.parent?.id;
+    if (isSameScenario && isSameParent) {
+      const tIdx = targetSiblings.findIndex((i) => i.id === targetItemId);
+      const sIdx = targetSiblings.findIndex((i) => i.id === itemId);
+      if (tIdx !== -1 && sIdx === tIdx + 1) {
+        return { ok: false, reason: "", isNoOp: true };
+      }
+    }
+
+    // Remove from source
+    const sourceChildren: ScenarioItemData[] = sourceEntry.parent
+      ? sourceEntry.parent.children
+      : sourceScenario.items;
+    const sourceIdx = sourceChildren.findIndex((i) => i.id === itemId);
+    if (sourceIdx === -1) {
+      return { ok: false, reason: "Item to move was not found." };
+    }
+    const [movedItem] = sourceChildren.splice(sourceIdx, 1);
+
+    // Re-locate target after the removal (index may have shifted in the same array)
+    const newTargetIdx = targetSiblings.findIndex((i) => i.id === targetItemId);
+    if (newTargetIdx === -1) {
+      // Safety fallback — target disappeared (shouldn't happen)
+      targetSiblings.push(movedItem);
+    } else {
+      targetSiblings.splice(newTargetIdx + 1, 0, movedItem);
+    }
 
     await this.save();
     this.refresh();
