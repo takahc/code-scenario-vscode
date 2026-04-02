@@ -12,7 +12,7 @@
     "vscode": "^1.85.0"
   },
   "categories": ["Other"],
-  "activationEvents": [],
+  "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -41,6 +41,7 @@
       { "command": "code-scenario.quickAddSelectionSymbol", "title": "Quick Add Selected Symbol to Scenario" },
       { "command": "code-scenario.setQuickAddScenario", "title": "Set Quick Add Scenario", "icon": "$(target)" },
       { "command": "code-scenario.clearQuickAddScenario", "title": "Clear Quick Add Scenario", "icon": "$(close)" },
+      { "command": "code-scenario.manageQuickAddScenario", "title": "Manage Quick Add Target" },
       { "command": "code-scenario.openItem", "title": "Open Item", "icon": "$(go-to-file)" },
       { "command": "code-scenario.renameItem", "title": "Rename Item" },
       { "command": "code-scenario.moveItem", "title": "Move Item..." },

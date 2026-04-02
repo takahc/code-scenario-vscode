@@ -84,6 +84,16 @@ saved Quick Add target is cleared automatically.
 All shortcuts can be remapped via **File → Preferences → Keyboard Shortcuts** (search for
 `code-scenario`).
 
+## Preview: Quick Add Target Status Bar
+
+The current **Quick Add** target is also available from the VS Code status bar as a preview
+feature.
+
+- The status bar item appears whenever the workspace has at least one scenario.
+- If a Quick Add target is saved, the item shows that scenario name.
+- If multiple scenarios exist and no target is saved yet, the item prompts you to select one.
+- Click the item to set, change, or clear the saved Quick Add target without leaving the editor.
+
 ## Reveal Active File in Scenarios
 
 Use **Reveal Active File in Scenarios** to jump from the current editor to the matching item(s)
