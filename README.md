@@ -3,18 +3,20 @@ code-scenario-vscode extension
 
 ## Drag and Drop
 
-Items in the Code Scenario sidebar can be reordered and moved between scenarios by dragging and dropping them.
+Items and scenarios in the Code Scenario sidebar can be reordered and moved by dragging and dropping them.
 
 | Drag source | Drop target | Result |
 |---|---|---|
+| Scenario node | Scenario node | Reorders: moves the dragged scenario to sit immediately after the target scenario |
 | Item node | Scenario node | Moves the item (and its subtree) to that scenario's root, appended at the end |
 | Item node | Item node | Moves the item (and its subtree) to sit immediately after the target item, at the same level as the target |
 
 **Constraints**
-- Only item nodes are draggable — scenario nodes cannot be dragged.
+- Dropping a scenario onto itself is silently ignored.
+- Dropping a scenario onto an item node or onto empty space is silently ignored.
 - Dropping an item onto itself or one of its descendants is rejected with a warning.
 - Dropping an item to its current position is silently ignored.
-- Multi-item drag, copy-on-drop, and cross-window drag are not supported in v1.
+- Multi-item / multi-scenario drag, copy-on-drop, and cross-window drag are not supported in v1.
 
 For placing an item as a *child* of another item, use the **Move Item…** or **Copy Item…**
 context-menu command instead.

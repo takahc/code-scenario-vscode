@@ -19,6 +19,9 @@ import {
 /** MIME type used for internal tree drag-and-drop. */
 const DRAG_MIME = "application/vnd.code-scenario-item";
 
+/** MIME type used for scenario-row reorder drag-and-drop. */
+const DRAG_MIME_SCENARIO = "application/vnd.code-scenario-scenario";
+
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new ScenarioProvider(context);
 
@@ -30,14 +33,26 @@ export function activate(context: vscode.ExtensionContext): void {
   // ── Drag-and-drop controller ──────────────────────────────────
 
   const dndController: vscode.TreeDragAndDropController<TreeNode> = {
-    dragMimeTypes: [DRAG_MIME],
-    dropMimeTypes: [DRAG_MIME],
+    dragMimeTypes: [DRAG_MIME, DRAG_MIME_SCENARIO],
+    dropMimeTypes: [DRAG_MIME, DRAG_MIME_SCENARIO],
 
     handleDrag(
       source: readonly TreeNode[],
       dataTransfer: vscode.DataTransfer
     ): void {
-      // Only item nodes are draggable; ignore scenario nodes and mixed selections
+      // Scenario drag: only when all dragged nodes are scenario nodes
+      const scenarioNodes = source.filter((n): n is ScenarioNode => n.kind === "scenario");
+      if (scenarioNodes.length > 0 && scenarioNodes.length === source.length) {
+        // v1: single-scenario drag
+        const node = scenarioNodes[0];
+        dataTransfer.set(
+          DRAG_MIME_SCENARIO,
+          new vscode.DataTransferItem({ scenarioId: node.data.id })
+        );
+        return;
+      }
+
+      // Item drag: only when all dragged nodes are item nodes
       const itemNodes = source.filter((n): n is ItemNode => n.kind === "item");
       if (itemNodes.length === 0) { return; }
       // v1: single-item drag (multi-drag is out of scope)
@@ -52,6 +67,21 @@ export function activate(context: vscode.ExtensionContext): void {
       target: TreeNode | undefined,
       dataTransfer: vscode.DataTransfer
     ): Promise<void> {
+      // ── Scenario reorder ──────────────────────────────────────
+      const scenarioTransferItem = dataTransfer.get(DRAG_MIME_SCENARIO);
+      if (scenarioTransferItem) {
+        const { scenarioId } = scenarioTransferItem.value as { scenarioId: string };
+        // Only scenario-onto-scenario drops are meaningful; everything else is a no-op
+        if (!target || target.kind !== "scenario") { return; }
+        const result = await provider.moveScenarioAfter(scenarioId, target.data.id);
+        if (!result.ok) {
+          if (result.isNoOp) { return; }
+          await vscode.window.showWarningMessage(result.reason);
+        }
+        return;
+      }
+
+      // ── Item drag ─────────────────────────────────────────────
       const transferItem = dataTransfer.get(DRAG_MIME);
       if (!transferItem) { return; }
 

@@ -495,6 +495,44 @@ export class ScenarioProvider
     return { ok: true };
   }
 
+  /**
+   * Reorders scenarios so that `sourceScenarioId` sits immediately after
+   * `targetScenarioId` in the top-level scenario list.
+   */
+  async moveScenarioAfter(
+    sourceScenarioId: string,
+    targetScenarioId: string,
+  ): Promise<MoveItemResult> {
+    // Self-drop
+    if (sourceScenarioId === targetScenarioId) {
+      return { ok: false, reason: "", isNoOp: true };
+    }
+
+    const sourceIdx = this.scenarios.findIndex((s) => s.id === sourceScenarioId);
+    if (sourceIdx === -1) {
+      return { ok: false, reason: "Source scenario was not found." };
+    }
+
+    const targetIdx = this.scenarios.findIndex((s) => s.id === targetScenarioId);
+    if (targetIdx === -1) {
+      return { ok: false, reason: "Target scenario was not found." };
+    }
+
+    // No-op: source is already immediately after target
+    if (sourceIdx === targetIdx + 1) {
+      return { ok: false, reason: "", isNoOp: true };
+    }
+
+    const [movedScenario] = this.scenarios.splice(sourceIdx, 1);
+    // Re-find target after the splice (its index may have shifted by -1)
+    const newTargetIdx = this.scenarios.findIndex((s) => s.id === targetScenarioId);
+    this.scenarios.splice(newTargetIdx + 1, 0, movedScenario);
+
+    await this.save();
+    this.refresh();
+    return { ok: true };
+  }
+
   // ── TreeDataProvider ─────────────────────────────────────────
 
   getTreeItem(node: TreeNode): vscode.TreeItem {
