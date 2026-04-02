@@ -22,14 +22,17 @@ Code Scenario の次の UX 改善候補を比較し、今回の作業単位と�
 - implementer が前後移動コマンド、キーバインド、深さ優先の flat traversal、セッション内のみの walkthrough 位置保持、README 追記を実装した。
 - checker がレビューを行い、削除済みシナリオを現在位置に持ったまま次回操作で回復できない不具合を 1 件検出した。
 - implementer が checker 指摘を受けて、削除済みシナリオ検知時の walkthrough 状態クリアと通知改善を追加し、単一項目シナリオでの不要な wrap 通知も抑制した。
-- checker の再確認により、削除済みシナリオからの復帰、空シナリオ挙動、単一項目時の通知抑制、compile 成功を確認した。
+- checker の再確認で、remembered walkthrough scenario が空シナリオになった後に状態が残留し、以後の操作がその空シナリオに固定される不具合を検出した。
+- implementer が `stepWalkthrough` の空シナリオ分岐で remembered walkthrough 状態をクリアする修正を入れ、次回操作で別シナリオを再解決できるようにした。
+- 上記の修正後、compile 成功を確認した。
+- checker の修正後再確認により、empty-scenario stuck 不具合の解消と、現在の作業ツリー上での pre-release 前提の機能妥当性を確認した。
 
 ## Uncompleted
-- コミット作成。
+- 修正を含む follow-up コミット作成。
 - pre-release への反映と preview 公開。
 
 ## Cautions
-walkthrough ロジックに自動テストはまだなく、今回も compile とコードレビュー中心の確認である。将来この経路を拡張する際は `stepWalkthrough` 周辺にテスト追加を検討したい。作業ツリーには今回の変更対象外の未追跡 `scripts/` ディレクトリが存在するため、コミット対象を明示的に限定する。
+walkthrough ロジックに自動テストはまだなく、今回も compile とコードレビュー中心の確認である。将来この経路を拡張する際は `stepWalkthrough` 周辺にテスト追加を検討したい。作業ツリーには今回の変更対象外の未追跡 `scripts/` ディレクトリが存在するため、コミット対象を明示的に限定する。repo 全体の lint は ESLint 設定欠如により baseline で失敗しており、今回機能固有のリグレッション判定とは切り分けて扱う必要がある。
 
 ## Next Steps
 変更一式と progress を同じ論理単位でコミットし、pre-release フローで preview 公開まで進める。
