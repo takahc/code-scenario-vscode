@@ -22,13 +22,15 @@ Quick Add target を「今作業している scenario」の既定コンテキス
 - README に、tree toolbar / command palette からの **Add Item** は saved Quick Add target を既定の追加先に使うこと、scenario row / item row 起点では明示文脈が優先されることを追記した。
 - checker が受け入れ条件 8 項目を確認し、明示文脈優先・saved target fallback・schema 非変更・README 追記が要件どおりであると判定した。
 - `npm run compile` は成功し、`npm run lint` は既存どおり ESLint 設定ファイル不在の baseline failure のままだと再確認した。
+- 変更一式を progress と合わせて `feat: default add item target` (`6f98f20`) として commit し、`origin/feature/add-item-target-default` へ push した。
+- 未追跡の `scripts/` を含む作業ツリーを汚さないため、一時 worktree で `origin/feature/add-item-target-default` を `merge: feature/add-item-target-default into pre-release` (`9e5f8aa`) として `pre-release` に取り込み、push した。
+- `Publish Extension` workflow (run `23921247553`) が成功し、`Publish pre-release extension` step まで完了して version `0.1.34` の preview 公開が走った。
 
 ## Uncompleted
-- commit 作成。
-- pre-release への反映と preview 公開。
+(なし)
 
 ## Cautions
 toolbar / command palette からの **Add Item** だけが今回の変更対象であり、scenario row / item row からの追加先を Quick Add target で上書きしないことが重要。保存済み target が削除済みなどで無効な場合は既存の picker ロジックへ安全に戻す必要がある。作業ツリーには未追跡の `scripts/` ディレクトリがあるため commit 対象へ含めない。
 
 ## Next Steps
-変更一式を progress と同じ論理単位で commit し、pre-release フローで preview 公開まで進める。
+必要に応じて Marketplace 上の preview 反映を確認し、次の Infinity UX loop 候補の選定へ進む。
