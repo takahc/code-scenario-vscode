@@ -17,8 +17,10 @@ export interface ScenarioItemData {
   kind: "symbol" | "file";
   /** The type context of this item */
   type: ItemType;
-  /** Relative path to the file (relative to workspace root) */
+  /** Relative path to the file (relative to the owning workspace folder) */
   filePath: string;
+  /** Owning workspace folder URI for multi-root workspace resolution */
+  workspaceFolderUri?: string;
   /** Cached line number (0-based), -1 if not yet resolved */
   line: number;
   /** Child items */

@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { ITEM_TYPES, ItemType } from "./scenarioModel";
+import { getActiveSelectionText, getActiveWorkspaceFilePath } from "./editorContext";
 
 export interface ItemEditorValues {
   filePath: string;
@@ -98,7 +99,7 @@ export async function showItemEditor(
           const symbolName = getActiveSelectionText();
           if (!symbolName) {
             void vscode.window.showInformationMessage(
-              "Select a symbol name in the editor first."
+              "Select a symbol-like identifier in the editor first."
             );
             return;
           }
@@ -131,34 +132,10 @@ function buildInitialValues(
 }
 
 function getActiveEditorDefaults(): Partial<ItemEditorValues> {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    return {};
-  }
-
-  const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-  if (!workspaceFolder) {
-    return {};
-  }
-
   return {
-    filePath: vscode.workspace.asRelativePath(editor.document.uri, false),
+    filePath: getActiveWorkspaceFilePath(),
     symbolName: getActiveSelectionText(),
   };
-}
-
-function getActiveSelectionText(): string {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor || editor.selection.isEmpty) {
-    return "";
-  }
-
-  const selectedText = editor.document.getText(editor.selection).trim();
-  if (!selectedText || selectedText.includes("\n")) {
-    return "";
-  }
-
-  return selectedText;
 }
 
 function validateValues(values: ItemEditorValues): string | undefined {
