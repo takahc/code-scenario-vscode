@@ -127,6 +127,23 @@ All bindings use the `Ctrl+Shift+Alt` chord prefix to avoid conflicts with VS Co
 > specific symbol. Create a new scenario at any time by focusing the Code Scenario sidebar and
 > pressing `Ctrl+Shift+Alt+N`.
 
+### Symbol type picker
+
+When you run **Quick Add Selected Symbol to Scenario** (`Ctrl+Shift+Alt+S`), after the scenario
+is resolved and any duplicate-guard prompt is handled, a Quick Pick asks you to choose the item
+type for the new entry:
+
+| Type | Meaning |
+|---|---|
+| `definition` | The symbol is defined here *(preselected — press Enter to accept)* |
+| `declare` | Forward declaration or interface declaration |
+| `call` | A call site for the symbol |
+| `codeblock` | A general code block of interest |
+| `reference` | Any other reference to the symbol |
+
+- Pressing **Enter** on the default (`definition`) keeps the fast-path to a single extra keystroke.
+- Pressing **Escape** cancels without adding the item.
+
 When your workspace has multiple scenarios, the first editor-driven Quick Add pick becomes the
 workspace default for later **Quick Add Current File to Scenario** and **Quick Add Selected Symbol
 to Scenario** actions. You can change that default any time from the Command Palette with
