@@ -190,8 +190,9 @@ in the Code Scenario tree — the reverse of clicking an item to open it.
 Use **Find Scenario Item...** to search all stored scenario items from a Quick Pick, then jump to
 the selected result.
 
-- Type part of the **item label**, **scenario name**, and/or **file path**.
+- Type part of the **item name**, **scenario name**, and/or **file path**.
 - Results show the scenario name plus path context to help distinguish similar items.
+- Symbol items display their type (e.g. `definition`, `call`) in the description column next to the file path; file items rely on the file icon to convey kind.
 - Selecting a result reveals it in the Code Scenario tree and opens it with the existing item-open
   behavior.
 

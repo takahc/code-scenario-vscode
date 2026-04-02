@@ -766,20 +766,20 @@ export class ScenarioProvider
       }
       return item;
     } else {
-      const label = `${node.data.name}  |  ${node.data.type}`;
       const hasChildren = node.data.children.length > 0;
       const location = resolveScenarioItemLocation(node.data);
       const item = new vscode.TreeItem(
-        label,
+        node.data.name,
         hasChildren
           ? vscode.TreeItemCollapsibleState.Collapsed
           : vscode.TreeItemCollapsibleState.None
       );
       item.id = node.data.id;
       item.contextValue = shouldUseWarningStyling(location) ? "scenarioItemStale" : "scenarioItem";
+      const typePrefix = node.data.kind === "symbol" ? `${node.data.type} · ` : "";
       item.description = hasChildren
-        ? `${node.data.filePath} · ${formatCount(node.data.children.length, "child")}`
-        : node.data.filePath;
+        ? `${typePrefix}${node.data.filePath} · ${formatCount(node.data.children.length, "child")}`
+        : `${typePrefix}${node.data.filePath}`;
       const actionHint = location.status === "resolved"
         ? "Click to open in the editor."
         : "Click to review file resolution or edit this item.";
