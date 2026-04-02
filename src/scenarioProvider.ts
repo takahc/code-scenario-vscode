@@ -95,8 +95,12 @@ export class ScenarioProvider
     return this.scenarios.find((scenario) => scenario.id === scenarioId);
   }
 
+  private getQuickAddScenarioId(): string | undefined {
+    return this.context.workspaceState.get<string>(QUICK_ADD_SCENARIO_ID_KEY);
+  }
+
   getQuickAddScenario(): ScenarioData | undefined {
-    const scenarioId = this.context.workspaceState.get<string>(QUICK_ADD_SCENARIO_ID_KEY);
+    const scenarioId = this.getQuickAddScenarioId();
     if (!scenarioId) {
       return undefined;
     }
@@ -104,8 +108,16 @@ export class ScenarioProvider
     return this.getScenarioById(scenarioId);
   }
 
+  isQuickAddScenario(scenarioId: string): boolean {
+    return this.getQuickAddScenarioId() === scenarioId;
+  }
+
   async setQuickAddScenario(scenarioId: string | undefined): Promise<void> {
+    if (this.getQuickAddScenarioId() === scenarioId) {
+      return;
+    }
     await this.context.workspaceState.update(QUICK_ADD_SCENARIO_ID_KEY, scenarioId);
+    this.refresh();
   }
 
   async addScenario(name: string): Promise<void> {
@@ -121,6 +133,9 @@ export class ScenarioProvider
 
   async deleteScenario(scenarioId: string): Promise<void> {
     this.scenarios = this.scenarios.filter((s) => s.id !== scenarioId);
+    if (this.isQuickAddScenario(scenarioId)) {
+      await this.context.workspaceState.update(QUICK_ADD_SCENARIO_ID_KEY, undefined);
+    }
     await this.save();
     this.refresh();
   }
@@ -415,6 +430,7 @@ export class ScenarioProvider
       const topLevelItemCount = node.data.items.length;
       const hasChildren = topLevelItemCount > 0;
       const staleCount = countStaleItems(node.data.items);
+      const isQuickAddTarget = this.isQuickAddScenario(node.data.id);
       const item = new vscode.TreeItem(
         node.data.name,
         hasChildren
@@ -422,16 +438,21 @@ export class ScenarioProvider
           : vscode.TreeItemCollapsibleState.None
       );
       item.id = node.data.id;
-      item.contextValue = "scenario";
+      item.contextValue = isQuickAddTarget ? "scenarioQuickAdd" : "scenario";
       item.iconPath = staleCount > 0
         ? new vscode.ThemeIcon("warning", new vscode.ThemeColor("list.warningForeground"))
         : new vscode.ThemeIcon("list-unordered");
-      item.description = staleCount > 0
-        ? `${formatCount(totalItemCount, "item")} · ⚠ ${staleCount} stale`
-        : formatCount(totalItemCount, "item");
+      item.description = [
+        formatCount(totalItemCount, "item"),
+        isQuickAddTarget ? "Quick Add" : undefined,
+        staleCount > 0 ? `⚠ ${staleCount} stale` : undefined,
+      ].filter(Boolean).join(" · ");
       item.tooltip = hasChildren
         ? `${node.data.name}\n${formatCount(totalItemCount, "total item")} across ${formatCount(topLevelItemCount, "top-level item")}`
         : `${node.data.name}\nNo items yet`;
+      if (isQuickAddTarget) {
+        item.tooltip = `${item.tooltip}\nQuick Add target for editor-driven adds`;
+      }
       if (staleCount > 0) {
         item.tooltip = `${item.tooltip}\n⚠ ${staleCount} stale item(s) — file path cannot be resolved`;
       }
