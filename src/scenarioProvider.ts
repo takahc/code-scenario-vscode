@@ -157,7 +157,7 @@ export class ScenarioProvider
     parentScenarioId: string,
     parentItemId: string | undefined,
     itemData: Omit<ScenarioItemData, "id" | "children">
-  ): Promise<void> {
+  ): Promise<string | undefined> {
     const item: ScenarioItemData = {
       ...itemData,
       id: generateId(),
@@ -165,19 +165,19 @@ export class ScenarioProvider
     };
 
     const scenario = this.scenarios.find((s) => s.id === parentScenarioId);
-    if (!scenario) { return; }
+    if (!scenario) { return undefined; }
 
     if (parentItemId) {
       const parent = findItemById(scenario.items, parentItemId);
-      if (parent) {
-        parent.children.push(item);
-      }
+      if (!parent) { return undefined; }
+      parent.children.push(item);
     } else {
       scenario.items.push(item);
     }
 
     await this.save();
     this.refresh();
+    return item.id;
   }
 
   async editItem(

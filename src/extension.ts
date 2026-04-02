@@ -209,11 +209,16 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        await provider.addItem(
+        const itemId = await provider.addItem(
           target.scenarioId,
           target.parentItemId,
           toScenarioItemData(values)
         );
+        if (!itemId) {
+          return;
+        }
+
+        await revealDroppedItem(provider, treeView, target.scenarioId, itemId);
       }
     )
   );
@@ -235,7 +240,7 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        await provider.addItem(
+        const itemId = await provider.addItem(
           target.scenarioId,
           undefined,
           createQuickItemData({
@@ -245,6 +250,11 @@ export function activate(context: vscode.ExtensionContext): void {
             workspaceFolderUri: fileReference.workspaceFolderUri,
           })
         );
+        if (!itemId) {
+          return;
+        }
+
+        await revealDroppedItem(provider, treeView, target.scenarioId, itemId);
 
         await vscode.window.showInformationMessage(
           `Added "${fileReference.filePath}" to scenario "${target.scenarioName}".`
@@ -278,7 +288,7 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        await provider.addItem(
+        const itemId = await provider.addItem(
           target.scenarioId,
           undefined,
           createQuickItemData({
@@ -289,6 +299,11 @@ export function activate(context: vscode.ExtensionContext): void {
             name: symbolName,
           })
         );
+        if (!itemId) {
+          return;
+        }
+
+        await revealDroppedItem(provider, treeView, target.scenarioId, itemId);
 
         await vscode.window.showInformationMessage(
           `Added "${symbolName}" from "${fileReference.filePath}" to scenario "${target.scenarioName}".`
