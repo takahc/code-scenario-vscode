@@ -24,7 +24,8 @@ Hover over any row in the Code Scenario sidebar to reveal action buttons directl
 
 | Row type | Hover buttons |
 |---|---|
-| Scenario | Rename (pencil), Delete (trash), Add Item (+) |
+| Scenario | Rename (pencil), Delete (trash), Add Item (+), Set Quick Add Target (target) |
+| Scenario (current Quick Add target) | Rename (pencil), Delete (trash), Add Item (+), Clear Quick Add Target (close) |
 | Item (normal) | Edit (pencil), Delete (trash), Add Child (+), Open (arrow) |
 | Item (stale ⚠) | Edit (pencil), Delete (trash), Add Child (+), Open (arrow), Relink (link) |
 
@@ -49,7 +50,11 @@ All bindings use the `Ctrl+Shift+Alt` chord prefix to avoid conflicts with VS Co
 When your workspace has multiple scenarios, the first editor-driven Quick Add pick becomes the
 workspace default for later **Quick Add Current File to Scenario** and **Quick Add Selected Symbol
 to Scenario** actions. You can change that default any time from the Command Palette with
-**Set Quick Add Scenario**.
+**Set Quick Add Scenario**, or directly from a scenario row in the tree.
+
+The current Quick Add target is shown subtly in the tree as **Quick Add** on that scenario row.
+You can also clear the saved target from that same row; if the target scenario is deleted, the
+saved Quick Add target is cleared automatically.
 
 All shortcuts can be remapped via **File → Preferences → Keyboard Shortcuts** (search for
 `code-scenario`).

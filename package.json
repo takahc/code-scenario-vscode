@@ -39,7 +39,8 @@
       { "command": "code-scenario.addItem", "title": "Add Item", "icon": "$(add)" },
       { "command": "code-scenario.quickAddCurrentFile", "title": "Quick Add Current File to Scenario" },
       { "command": "code-scenario.quickAddSelectionSymbol", "title": "Quick Add Selected Symbol to Scenario" },
-      { "command": "code-scenario.setQuickAddScenario", "title": "Set Quick Add Scenario" },
+      { "command": "code-scenario.setQuickAddScenario", "title": "Set Quick Add Scenario", "icon": "$(target)" },
+      { "command": "code-scenario.clearQuickAddScenario", "title": "Clear Quick Add Scenario", "icon": "$(close)" },
       { "command": "code-scenario.openItem", "title": "Open Item", "icon": "$(go-to-file)" },
       { "command": "code-scenario.renameItem", "title": "Rename Item" },
       { "command": "code-scenario.moveItem", "title": "Move Item..." },
@@ -108,23 +109,43 @@
       "view/item/context": [
         {
           "command": "code-scenario.renameScenario",
-          "when": "view == codeScenarioView && viewItem == scenario",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
           "group": "inline"
         },
         {
           "command": "code-scenario.deleteScenario",
-          "when": "view == codeScenarioView && viewItem == scenario",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
           "group": "inline"
         },
         {
           "command": "code-scenario.renameScenario",
-          "when": "view == codeScenarioView && viewItem == scenario",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
           "group": "1_modify"
         },
         {
           "command": "code-scenario.deleteScenario",
-          "when": "view == codeScenarioView && viewItem == scenario",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
           "group": "1_modify"
+        },
+        {
+          "command": "code-scenario.setQuickAddScenario",
+          "when": "view == codeScenarioView && viewItem == scenario",
+          "group": "inline"
+        },
+        {
+          "command": "code-scenario.clearQuickAddScenario",
+          "when": "view == codeScenarioView && viewItem == scenarioQuickAdd",
+          "group": "inline"
+        },
+        {
+          "command": "code-scenario.setQuickAddScenario",
+          "when": "view == codeScenarioView && viewItem == scenario",
+          "group": "2_quickAdd"
+        },
+        {
+          "command": "code-scenario.clearQuickAddScenario",
+          "when": "view == codeScenarioView && viewItem == scenarioQuickAdd",
+          "group": "2_quickAdd"
         },
         {
           "command": "code-scenario.editItem",
@@ -138,7 +159,7 @@
         },
         {
           "command": "code-scenario.addItem",
-          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd || viewItem == scenarioItem || viewItem == scenarioItemStale)",
           "group": "inline"
         },
         {

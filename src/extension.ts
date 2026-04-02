@@ -270,7 +270,15 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "code-scenario.setQuickAddScenario",
-      async () => {
+      async (node?: ScenarioNode) => {
+        if (node instanceof ScenarioNode) {
+          await provider.setQuickAddScenario(node.data.id);
+          await vscode.window.showInformationMessage(
+            `Quick Add scenario set to "${node.data.name}".`
+          );
+          return;
+        }
+
         const scenarios = provider.getScenarios();
         if (scenarios.length === 0) {
           await vscode.window.showInformationMessage(
@@ -290,6 +298,26 @@ export function activate(context: vscode.ExtensionContext): void {
         await provider.setQuickAddScenario(scenario.id);
         await vscode.window.showInformationMessage(
           `Quick Add scenario set to "${scenario.name}".`
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.clearQuickAddScenario",
+      async (node?: ScenarioNode) => {
+        const quickAddScenario = provider.getQuickAddScenario();
+        if (!quickAddScenario) {
+          await vscode.window.showInformationMessage(
+            "No Quick Add scenario is currently set."
+          );
+          return;
+        }
+
+        await provider.setQuickAddScenario(undefined);
+        await vscode.window.showInformationMessage(
+          `Cleared Quick Add scenario "${node?.data.name ?? quickAddScenario.name}".`
         );
       }
     )
