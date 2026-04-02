@@ -611,6 +611,18 @@ export class ScenarioProvider
   }
 
   /**
+   * Returns all items of the given scenario as a flat array in depth-first
+   * tree order — the same visual order as displayed in the tree view.
+   */
+  getFlatItemNodes(scenarioId: string): ItemNode[] {
+    const scenario = this.getScenarioById(scenarioId);
+    if (!scenario) { return []; }
+    const result: ItemNode[] = [];
+    collectItemNodesDfs(scenario.items, scenarioId, result);
+    return result;
+  }
+
+  /**
    * Moves `itemId` (from `sourceScenarioId`) so that it becomes the immediate
    * sibling right after `targetItemId` (in `targetScenarioId`).
    * The dragged item's subtree is preserved.
@@ -1178,4 +1190,19 @@ function applyRenamesRecursively(
     }
   }
   return changed;
+}
+
+/**
+ * Depth-first traversal: pushes every item node reachable from `items` into
+ * `result` in the same order as displayed in the tree view.
+ */
+function collectItemNodesDfs(
+  items: ScenarioItemData[],
+  scenarioId: string,
+  result: ItemNode[]
+): void {
+  for (const item of items) {
+    result.push(new ItemNode(item, scenarioId));
+    collectItemNodesDfs(item.children, scenarioId, result);
+  }
 }

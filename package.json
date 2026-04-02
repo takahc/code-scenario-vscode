@@ -53,7 +53,9 @@
       { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" },
       { "command": "code-scenario.findScenarioItem", "title": "Find Scenario Item...", "icon": "$(search)" },
       { "command": "code-scenario.revealActiveFileInTree", "title": "Reveal Active File in Scenarios", "icon": "$(eye)" },
-      { "command": "code-scenario.addFileFromExplorer", "title": "Add to Scenario..." }
+      { "command": "code-scenario.addFileFromExplorer", "title": "Add to Scenario..." },
+      { "command": "code-scenario.nextItem", "title": "Next Scenario Item" },
+      { "command": "code-scenario.previousItem", "title": "Previous Scenario Item" }
     ],
     "keybindings": [
       {
@@ -70,6 +72,14 @@
         "command": "code-scenario.addScenario",
         "key": "ctrl+shift+alt+n",
         "when": "focusedView == codeScenarioView"
+      },
+      {
+        "command": "code-scenario.nextItem",
+        "key": "ctrl+shift+alt+]"
+      },
+      {
+        "command": "code-scenario.previousItem",
+        "key": "ctrl+shift+alt+["
       }
     ],
     "configuration": {
