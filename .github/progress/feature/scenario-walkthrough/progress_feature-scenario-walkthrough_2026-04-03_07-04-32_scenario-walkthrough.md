@@ -30,12 +30,15 @@ Code Scenario の次の UX 改善候補を比較し、今回の作業単位と�
 - PM 判断として、`feature/scenario-walkthrough` と `pre-release` の差分が walkthrough 機能の 3 コミットに限定されていることを確認し、release 対象範囲を確定した。
 - pre-release 直前の再確認として、現行 feature ブランチ上で `npm run compile` の成功を再確認した。
 - 作業ツリーに未追跡 `scripts/` が残っているため、既存作業を汚さずに release を進めるための別 worktree で `pre-release` マージを進める方針を決定した。
+- `origin/pre-release` を起点に一時 worktree / 一時ブランチを作成し、`feature/scenario-walkthrough` をマージして `pre-release` へ push した。
+- remote `pre-release` には walkthrough 本体が先行して入っていたため、今回の merge 差分は最新 progress 更新が中心であることを確認した。
+- `pre-release` への push 後、GitHub Actions `Publish Extension` の run `23926431872` が成功し、`Publish pre-release extension` ステップ実行と preview version `0.1.44` の公開を確認した。
 
 ## Uncompleted
-- pre-release への反映と preview 公開。
+- なし。
 
 ## Cautions
-walkthrough ロジックに自動テストはまだなく、今回も compile とコードレビュー中心の確認である。将来この経路を拡張する際は `stepWalkthrough` 周辺にテスト追加を検討したい。作業ツリーには今回の変更対象外の未追跡 `scripts/` ディレクトリが存在するため、branch switch ではなく別 worktree で pre-release 反映を行う。repo 全体の lint は ESLint 設定欠如により baseline で失敗しており、今回機能固有のリグレッション判定とは切り分けて扱う必要がある。
+walkthrough ロジックに自動テストはまだなく、今回も compile とコードレビュー中心の確認である。将来この経路を拡張する際は `stepWalkthrough` 周辺にテスト追加を検討したい。作業ツリーには今回の変更対象外の未追跡 `scripts/` ディレクトリが存在するため、今回の pre-release 反映でも branch switch ではなく別 worktree を使った。repo 全体の lint は ESLint 設定欠如により baseline で失敗しており、今回機能固有のリグレッション判定とは切り分けて扱う必要がある。remote `pre-release` 側には walkthrough の本体変更が先行反映されていたため、release ノートや比較時には今回 push の実差分が progress 更新中心である点に注意が必要である。
 
 ## Next Steps
-別 worktree で `feature/scenario-walkthrough` を `pre-release` にマージして push し、GitHub Actions の pre-release publish 実行結果を確認する。
+preview `0.1.44` の使用感を確認し、問題がなければ stable 向けに `main` へ載せる単位を別途整理する。
