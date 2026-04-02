@@ -49,6 +49,11 @@
           "group": "navigation"
         },
         {
+          "command": "code-scenario.addItem",
+          "when": "view == codeScenarioView",
+          "group": "navigation"
+        },
+        {
           "command": "code-scenario.refresh",
           "when": "view == codeScenarioView",
           "group": "navigation"
@@ -68,7 +73,7 @@
         {
           "command": "code-scenario.addItem",
           "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioItem)",
-          "group": "1_modify"
+          "group": "inline"
         },
         {
           "command": "code-scenario.editItem",
