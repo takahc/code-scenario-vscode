@@ -29,13 +29,14 @@ scenario 行から明示的に walkthrough を開始できるようにし、使�
 - `npm run compile` がエラーゼロで完了することを確認した。
 - `scripts/` をコミットに含めないよう制御した。
 - `feat: add Start Walkthrough Here command for scenario rows` として feature ブランチにコミットした。
+- checker により、empty / non-empty scenario の両経路と walkthrough 永続化との整合性に問題がないことを確認した。
 
 ## Uncompleted
-- 実装後の checker による手動 E2E 動作確認（拡張機能ホストを起動した実機確認）。
+- 実装後の checker による手動 E2E 動作確認（拡張機能ホストを起動した実機確認）は未実施のまま。
 - pre-release への反映と preview 公開。
 
 ## Cautions
-ワークツリーには今回タスク外の未追跡 `scripts/` が存在するため、コミット対象へ混入させないよう注意する。
+ワークツリーには今回タスク外の未追跡 `scripts/` が存在するため、コミット対象へ混入させないよう注意する。なお、tree コンテキスト専用コマンドのため `node` 未指定ガードは追加しておらず、これは既存コマンド群と同じパターンに揃えている。
 
 ## Next Steps
-checker / PM にて、ブランチの動作確認ののち pre-release マージ・バージョンアップ・公開を進める。
+feature ブランチを push し、pre-release マージと preview 公開まで進める。
