@@ -3,6 +3,7 @@ import { ITEM_TYPES, ItemType } from "./scenarioModel";
 import { getActiveSelectionText } from "./editorContext";
 import {
   getActiveWorkspaceFileReference,
+  validateWorkspaceFileUri,
   validateWorkspaceFileInput,
 } from "./workspacePaths";
 
@@ -25,7 +26,8 @@ type WebviewMessage =
   | { type: "submit"; value: ItemEditorValues }
   | { type: "cancel" }
   | { type: "fillActiveFile" }
-  | { type: "fillSelection" };
+  | { type: "fillSelection" }
+  | { type: "browseFile" };
 
 export async function showItemEditor(
   options: ItemEditorOptions
@@ -117,6 +119,45 @@ export async function showItemEditor(
                   workspaceFolderUri: defaults.workspaceFolderUri ?? "",
                 }
                 : {}),
+            },
+          });
+          return;
+        }
+        case "browseFile": {
+          const selectedFile = await vscode.window.showOpenDialog({
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: false,
+            openLabel: "Select Source File",
+            title: "Select Source File",
+          });
+          const fileUri = selectedFile?.[0];
+          if (!fileUri) {
+            return;
+          }
+
+          const fileValidation = validateWorkspaceFileUri(fileUri);
+          if (fileValidation.error) {
+            void panel.webview.postMessage({
+              type: "showError",
+              value: `Could not use the selected file. ${fileValidation.error}`,
+            });
+            return;
+          }
+
+          if (!fileValidation.value) {
+            void panel.webview.postMessage({
+              type: "showError",
+              value: "Could not use the selected file. Choose a different file and try again.",
+            });
+            return;
+          }
+
+          void panel.webview.postMessage({
+            type: "patchValues",
+            value: {
+              filePath: fileValidation.value.filePath,
+              workspaceFolderUri: fileValidation.value.workspaceFolderUri ?? "",
             },
           });
           return;
@@ -387,6 +428,7 @@ function getWebviewHtml(
 
     <div class="toolbar">
       <button type="button" id="useActiveFile">Use Active File</button>
+      <button type="button" id="browseFile">Browse File...</button>
       <button type="button" id="useSelection">Use Editor Selection as Symbol</button>
     </div>
 
@@ -510,6 +552,10 @@ function getWebviewHtml(
     document.getElementById("useSelection").addEventListener("click", () => {
       clearError();
       vscode.postMessage({ type: "fillSelection" });
+    });
+
+    document.getElementById("browseFile").addEventListener("click", () => {
+      vscode.postMessage({ type: "browseFile" });
     });
 
     document.getElementById("cancelButton").addEventListener("click", () => {
