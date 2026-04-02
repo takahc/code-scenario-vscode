@@ -140,10 +140,16 @@ next invocation starts fresh). Dismissing the notification keeps the saved posit
 
 | Method | Action |
 |---|---|
+| Tree context menu | Right-click a scenario row → **Start Walkthrough Here** |
+| Tree inline action | Click the **▶** icon on a scenario row |
 | Keyboard | `Ctrl+Shift+Alt+]` — Next Scenario Item |
 | Keyboard | `Ctrl+Shift+Alt+[` — Previous Scenario Item |
 | Command Palette | `Next Scenario Item` |
 | Command Palette | `Previous Scenario Item` |
+
+**Start Walkthrough Here** resets the walkthrough position to the first item of the chosen
+scenario, opens that item, selects it in the tree, and shows a brief reminder of the next/previous
+shortcuts. If the scenario has no items an informational message is shown instead.
 
 ## Keyboard Shortcuts
 

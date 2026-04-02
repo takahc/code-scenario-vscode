@@ -948,6 +948,34 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.startWalkthroughHere",
+      async (node: ScenarioNode) => {
+        const scenarioId = node.data.id;
+        const flatItems = provider.getFlatItemNodes(scenarioId);
+
+        if (flatItems.length === 0) {
+          await vscode.window.showInformationMessage(
+            `Scenario "${node.data.name}" has no items to walk through.`
+          );
+          return;
+        }
+
+        const firstItem = flatItems[0];
+        setWalkthroughPosition({ scenarioId, itemId: firstItem.data.id });
+
+        await vscode.commands.executeCommand("code-scenario.openItem", firstItem);
+        await revealItemNode(treeView, firstItem);
+
+        await vscode.window.showInformationMessage(
+          `Walkthrough started: "${node.data.name}". ` +
+          "Use Ctrl+Shift+Alt+] / Ctrl+Shift+Alt+[ to step forward and back."
+        );
+      }
+    )
+  );
+
   // ── Auto-reveal on active editor change ───────────────────────
 
   let autoRevealTimer: ReturnType<typeof setTimeout> | undefined;
