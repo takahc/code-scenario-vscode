@@ -148,6 +148,7 @@ export class ScenarioProvider
       const totalItemCount = countScenarioItems(node.data);
       const topLevelItemCount = node.data.items.length;
       const hasChildren = topLevelItemCount > 0;
+      const staleCount = countStaleItems(node.data.items);
       const item = new vscode.TreeItem(
         node.data.name,
         hasChildren
@@ -155,11 +156,18 @@ export class ScenarioProvider
           : vscode.TreeItemCollapsibleState.None
       );
       item.contextValue = "scenario";
-      item.iconPath = new vscode.ThemeIcon("list-unordered");
-      item.description = formatCount(totalItemCount, "item");
+      item.iconPath = staleCount > 0
+        ? new vscode.ThemeIcon("warning", new vscode.ThemeColor("list.warningForeground"))
+        : new vscode.ThemeIcon("list-unordered");
+      item.description = staleCount > 0
+        ? `${formatCount(totalItemCount, "item")} · ⚠ ${staleCount} stale`
+        : formatCount(totalItemCount, "item");
       item.tooltip = hasChildren
         ? `${node.data.name}\n${formatCount(totalItemCount, "total item")} across ${formatCount(topLevelItemCount, "top-level item")}`
         : `${node.data.name}\nNo items yet`;
+      if (staleCount > 0) {
+        item.tooltip = `${item.tooltip}\n⚠ ${staleCount} stale item(s) — file path cannot be resolved`;
+      }
       return item;
     } else {
       const label = `${node.data.name}  |  ${node.data.type}`;
@@ -247,6 +255,14 @@ function removeItemById(
 
 function countScenarioItems(scenario: ScenarioData): number {
   return countNestedItems(scenario.items);
+}
+
+function countStaleItems(items: ScenarioItemData[]): number {
+  return items.reduce((total, item) => {
+    const location = resolveScenarioItemLocation(item);
+    const selfCount = shouldUseWarningStyling(location) ? 1 : 0;
+    return total + selfCount + countStaleItems(item.children);
+  }, 0);
 }
 
 function countNestedItems(items: ScenarioItemData[]): number {
