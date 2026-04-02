@@ -39,6 +39,7 @@
       { "command": "code-scenario.addItem", "title": "Add Item", "icon": "$(add)" },
       { "command": "code-scenario.quickAddCurrentFile", "title": "Quick Add Current File to Scenario" },
         { "command": "code-scenario.quickAddSelectionSymbol", "title": "Quick Add Selected Symbol to Scenario" },
+      { "command": "code-scenario.renameItem", "title": "Rename Item" },
       { "command": "code-scenario.editItem", "title": "Edit Item" },
       { "command": "code-scenario.deleteItem", "title": "Delete Item" },
       { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" }
@@ -76,6 +77,11 @@
           "command": "code-scenario.addItem",
           "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioItem)",
           "group": "inline"
+        },
+        {
+          "command": "code-scenario.renameItem",
+          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "group": "1_modify"
         },
         {
           "command": "code-scenario.editItem",

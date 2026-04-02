@@ -67,6 +67,21 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.renameItem",
+      async (node: ItemNode) => {
+        const newName = await vscode.window.showInputBox({
+          prompt: "Enter new item name",
+          value: node.data.name,
+        });
+        if (newName && newName.trim()) {
+          await provider.editItem(node.scenarioId, node.data.id, { name: newName.trim() });
+        }
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.addItem",
       async (node?: ScenarioNode | ItemNode) => {
         const target = await resolveAddTarget(provider, node);
