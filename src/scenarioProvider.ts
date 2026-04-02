@@ -115,7 +115,17 @@ export class ScenarioProvider
 
     const item = findItemById(scenario.items, itemId);
     if (item) {
-      Object.assign(item, updates);
+      const { workspaceFolderUri, ...restUpdates } = updates;
+      Object.assign(item, restUpdates);
+
+      if ("workspaceFolderUri" in updates) {
+        if (workspaceFolderUri === undefined) {
+          delete item.workspaceFolderUri;
+        } else {
+          item.workspaceFolderUri = workspaceFolderUri;
+        }
+      }
+
       await this.save();
       this.refresh();
     }

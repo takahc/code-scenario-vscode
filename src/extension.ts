@@ -179,6 +179,7 @@ export function activate(context: vscode.ExtensionContext): void {
             filePath: node.data.filePath,
             symbolName: node.data.kind === "symbol" ? node.data.name : "",
             type: node.data.type,
+            workspaceFolderUri: node.data.workspaceFolderUri,
           },
         });
         if (!values) {
@@ -188,7 +189,7 @@ export function activate(context: vscode.ExtensionContext): void {
         await provider.editItem(
           node.scenarioId,
           node.data.id,
-          toScenarioItemData(values)
+          toScenarioItemUpdates(values)
         );
       }
     )
@@ -330,8 +331,22 @@ function toScenarioItemData(
     kind: symbolName ? "symbol" : "file",
     type: values.type,
     filePath,
+    ...(values.workspaceFolderUri
+      ? {
+        workspaceFolderUri: values.workspaceFolderUri,
+      }
+      : {}),
     ...(symbolName ? { name: symbolName } : {}),
   });
+}
+
+function toScenarioItemUpdates(
+  values: ItemEditorValues
+): Partial<Omit<ScenarioItemData, "id" | "children">> {
+  return {
+    ...toScenarioItemData(values),
+    workspaceFolderUri: values.workspaceFolderUri,
+  };
 }
 
 function createQuickItemData(options: {
