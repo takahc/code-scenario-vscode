@@ -45,7 +45,8 @@
       { "command": "code-scenario.editItem", "title": "Edit Item", "icon": "$(edit)" },
       { "command": "code-scenario.relinkItem", "title": "Relink Item", "icon": "$(link)" },
       { "command": "code-scenario.deleteItem", "title": "Delete Item", "icon": "$(trash)" },
-      { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" }
+      { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" },
+      { "command": "code-scenario.revealActiveFileInTree", "title": "Reveal Active File in Scenarios", "icon": "$(eye)" }
     ],
     "keybindings": [
       {
@@ -64,6 +65,16 @@
         "when": "focusedView == codeScenarioView"
       }
     ],
+    "configuration": {
+      "title": "Code Scenario",
+      "properties": {
+        "codeScenario.autoRevealInTree": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically reveal the first matching scenario item in the tree when the active editor changes. Reveal is debounced and does not steal focus or show a notification when no item matches."
+        }
+      }
+    },
     "menus": {
       "view/title": [
         {
@@ -78,6 +89,11 @@
         },
         {
           "command": "code-scenario.refresh",
+          "when": "view == codeScenarioView",
+          "group": "navigation"
+        },
+        {
+          "command": "code-scenario.revealActiveFileInTree",
           "when": "view == codeScenarioView",
           "group": "navigation"
         }

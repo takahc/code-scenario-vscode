@@ -31,3 +31,34 @@ All bindings use the `Ctrl+Shift+Alt` chord prefix to avoid conflicts with VS Co
 
 All shortcuts can be remapped via **File → Preferences → Keyboard Shortcuts** (search for
 `code-scenario`).
+
+## Reveal Active File in Scenarios
+
+Use **Reveal Active File in Scenarios** to jump from the current editor to the matching item(s)
+in the Code Scenario tree — the reverse of clicking an item to open it.
+
+- **Single match** — the tree scrolls to and selects the item automatically.
+- **Multiple matches** — a Quick Pick lists every matching item with its scenario name and file
+  path so you can choose the right one.
+- **No match** — an informational message is shown.
+- **Untitled or non-workspace files** — the command exits silently without an error.
+
+### How to invoke
+
+| Method | Action |
+|---|---|
+| Tree toolbar | Click the **eye** (👁) icon in the Code Scenario panel header |
+| Command Palette | `Reveal Active File in Scenarios` |
+
+### Auto-reveal on editor change
+
+Set `codeScenario.autoRevealInTree` to `true` to have the first matching scenario item revealed
+automatically whenever you switch the active editor.
+
+```json
+"codeScenario.autoRevealInTree": true
+```
+
+Auto-reveal is **off by default** to avoid disrupting the tree's scroll position and expanded
+state during normal editing. When enabled it is debounced (300 ms), does not steal keyboard
+focus, and shows no notification when no match is found.

@@ -269,6 +269,7 @@ export class ScenarioProvider
           ? vscode.TreeItemCollapsibleState.Collapsed
           : vscode.TreeItemCollapsibleState.None
       );
+      item.id = node.data.id;
       item.contextValue = "scenario";
       item.iconPath = staleCount > 0
         ? new vscode.ThemeIcon("warning", new vscode.ThemeColor("list.warningForeground"))
@@ -293,6 +294,7 @@ export class ScenarioProvider
           ? vscode.TreeItemCollapsibleState.Collapsed
           : vscode.TreeItemCollapsibleState.None
       );
+      item.id = node.data.id;
       item.contextValue = shouldUseWarningStyling(location) ? "scenarioItemStale" : "scenarioItem";
       item.description = hasChildren
         ? `${node.data.filePath} · ${formatCount(node.data.children.length, "child")}`
@@ -327,6 +329,26 @@ export class ScenarioProvider
 
       return item;
     }
+  }
+
+  getParent(node: TreeNode): TreeNode | undefined {
+    if (node.kind === "scenario") {
+      return undefined;
+    }
+    // ItemNode — locate the scenario, then find the item's direct parent
+    const scenario = this.scenarios.find((s) => s.id === node.scenarioId);
+    if (!scenario) { return undefined; }
+
+    const entry = findItemEntry(scenario.items, node.data.id);
+    if (!entry) { return undefined; }
+
+    if (entry.parent === undefined) {
+      // Top-level item: parent is the scenario root
+      return new ScenarioNode(scenario);
+    }
+
+    // Nested item: parent is another item in the same scenario
+    return new ItemNode(entry.parent, node.scenarioId);
   }
 
   getChildren(node?: TreeNode): vscode.ProviderResult<TreeNode[]> {

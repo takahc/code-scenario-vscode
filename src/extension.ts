@@ -5,7 +5,7 @@ import {
   ItemNode,
   MoveItemDestination,
 } from "./scenarioProvider";
-import { ScenarioItemData } from "./scenarioModel";
+import { ScenarioData, ScenarioItemData } from "./scenarioModel";
 import { ItemEditorValues, showItemEditor } from "./itemEditorPanel";
 import { getActiveSelectionText } from "./editorContext";
 import { resolveItemLine } from "./symbolResolver";
@@ -323,6 +323,115 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.revealActiveFileInTree",
+      async () => {
+        const fileReference = getActiveWorkspaceFileReference();
+        if (!fileReference) {
+          // Untitled or non-workspace file — nothing to reveal
+          return;
+        }
+
+        const matches = findFileMatches(
+          provider.getScenarios(),
+          fileReference.filePath,
+          fileReference.workspaceFolderUri
+        );
+
+        if (matches.length === 0) {
+          await vscode.window.showInformationMessage(
+            `No scenario items match "${fileReference.filePath}".`
+          );
+          return;
+        }
+
+        if (matches.length === 1) {
+          await treeView.reveal(matches[0].node, {
+            select: true,
+            focus: false,
+            expand: true,
+          });
+          return;
+        }
+
+        // Multiple matches — let the user choose
+        const selected = await vscode.window.showQuickPick(
+          matches.map((match) => ({
+            label: match.node.data.name,
+            description: `${match.scenarioName} · ${match.node.data.filePath}`,
+            detail: `Type: ${match.node.data.type}`,
+            match,
+          })),
+          {
+            placeHolder: `Multiple scenario items match "${fileReference.filePath}" — select one to reveal`,
+            matchOnDescription: true,
+            matchOnDetail: true,
+          }
+        );
+
+        if (selected) {
+          await treeView.reveal(selected.match.node, {
+            select: true,
+            focus: false,
+            expand: true,
+          });
+        }
+      }
+    )
+  );
+
+  // ── Auto-reveal on active editor change ───────────────────────
+
+  let autoRevealTimer: ReturnType<typeof setTimeout> | undefined;
+
+  context.subscriptions.push({
+    dispose(): void {
+      if (autoRevealTimer !== undefined) {
+        clearTimeout(autoRevealTimer);
+        autoRevealTimer = undefined;
+      }
+    },
+  });
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      const config = vscode.workspace.getConfiguration("codeScenario");
+      if (!config.get<boolean>("autoRevealInTree", false)) {
+        return;
+      }
+
+      if (autoRevealTimer !== undefined) {
+        clearTimeout(autoRevealTimer);
+      }
+
+      autoRevealTimer = setTimeout(() => {
+        autoRevealTimer = undefined;
+
+        const fileReference = getActiveWorkspaceFileReference();
+        if (!fileReference) {
+          return;
+        }
+
+        const matches = findFileMatches(
+          provider.getScenarios(),
+          fileReference.filePath,
+          fileReference.workspaceFolderUri
+        );
+
+        if (matches.length === 0) {
+          return; // No toast in auto-reveal mode
+        }
+
+        void treeView.reveal(matches[0].node, {
+          select: true,
+          focus: false,
+          expand: true,
+        });
+      }, 300);
+    })
+  );
+
   // ── Open item in editor ───────────────────────────────────────
 
   context.subscriptions.push(
@@ -550,4 +659,57 @@ function formatLocationMessage(
   }
 
   return `Source file "${location.filePath}" was not found. Edit the item to choose the correct file.`;
+}
+
+// ── Reveal helpers ────────────────────────────────────────────
+
+interface FileMatch {
+  node: ItemNode;
+  scenarioName: string;
+}
+
+function findFileMatches(
+  scenarios: ScenarioData[],
+  filePath: string,
+  workspaceFolderUri: string
+): FileMatch[] {
+  const results: FileMatch[] = [];
+  for (const scenario of scenarios) {
+    collectFileMatchesFromItems(
+      scenario.items,
+      scenario.id,
+      scenario.name,
+      filePath,
+      workspaceFolderUri,
+      results
+    );
+  }
+  return results;
+}
+
+function collectFileMatchesFromItems(
+  items: ScenarioItemData[],
+  scenarioId: string,
+  scenarioName: string,
+  filePath: string,
+  workspaceFolderUri: string,
+  results: FileMatch[]
+): void {
+  for (const item of items) {
+    const pathMatches = item.filePath === filePath;
+    const folderMatches =
+      item.workspaceFolderUri === undefined ||
+      item.workspaceFolderUri === workspaceFolderUri;
+    if (pathMatches && folderMatches) {
+      results.push({ node: new ItemNode(item, scenarioId), scenarioName });
+    }
+    collectFileMatchesFromItems(
+      item.children,
+      scenarioId,
+      scenarioName,
+      filePath,
+      workspaceFolderUri,
+      results
+    );
+  }
 }
