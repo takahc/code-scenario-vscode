@@ -31,7 +31,7 @@ export async function resolveItemLine(
       return item.line >= 0 ? item.line : 0;
     }
 
-    const found = findSymbol(symbols, item.name, item.type);
+    const found = findSymbol(symbols, item.name);
     if (found !== undefined) {
       return found;
     }
@@ -44,15 +44,14 @@ export async function resolveItemLine(
 
 function findSymbol(
   symbols: vscode.DocumentSymbol[],
-  name: string,
-  type: string
+  name: string
 ): number | undefined {
   for (const sym of symbols) {
     if (sym.name === name || sym.name.startsWith(name + "(") || sym.name.startsWith(name + " ")) {
       return sym.range.start.line;
     }
     if (sym.children && sym.children.length > 0) {
-      const found = findSymbol(sym.children, name, type);
+      const found = findSymbol(sym.children, name);
       if (found !== undefined) {
         return found;
       }

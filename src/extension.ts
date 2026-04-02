@@ -88,8 +88,9 @@ export function activate(context: vscode.ExtensionContext): void {
         );
         if (!typeChoice) { return; }
 
-        const kind = !symbolName || !symbolName.trim() ? "file" : "symbol";
-        const name = kind === "file" ? filePath.trim() : symbolName!.trim();
+        const trimmedSymbol = symbolName ? symbolName.trim() : "";
+        const kind = trimmedSymbol ? "symbol" : "file";
+        const name = kind === "file" ? filePath.trim() : trimmedSymbol;
 
         await provider.addItem(scenarioId, parentItemId, {
           name,
@@ -125,8 +126,9 @@ export function activate(context: vscode.ExtensionContext): void {
         );
         if (!typeChoice) { return; }
 
-        const kind = !symbolName || !symbolName.trim() ? "file" : "symbol";
-        const name = kind === "file" ? filePath.trim() : symbolName!.trim();
+        const trimmedSymbol = symbolName ? symbolName.trim() : "";
+        const kind = trimmedSymbol ? "symbol" : "file";
+        const name = kind === "file" ? filePath.trim() : trimmedSymbol;
 
         await provider.editItem(node.scenarioId, node.data.id, {
           name,
