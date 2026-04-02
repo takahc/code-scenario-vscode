@@ -425,6 +425,42 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.copyItem",
+      async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Copy Item is only available from an item context menu."
+          );
+          return;
+        }
+
+        const destination = await resolveCopyDestination(provider, node);
+        if (!destination) {
+          return;
+        }
+
+        const result = await provider.copyItem(
+          node.scenarioId,
+          node.data.id,
+          destination.scenarioId,
+          destination.parentItemId
+        );
+
+        if (!result.ok) {
+          await vscode.window.showWarningMessage(result.reason);
+          return;
+        }
+
+        await revealDroppedItem(provider, treeView, destination.scenarioId, result.itemId);
+        await vscode.window.showInformationMessage(
+          `Copied "${node.data.name}" to ${destination.label}.`
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.deleteItem",
       async (node: ItemNode) => {
         if (!(node instanceof ItemNode)) {
@@ -806,6 +842,26 @@ async function resolveMoveDestination(
   return vscode.window.showQuickPick(destinations, {
     title: "Move Item",
     placeHolder: `Select a destination for "${node.data.name}"`,
+    matchOnDescription: true,
+    matchOnDetail: true,
+  });
+}
+
+async function resolveCopyDestination(
+  provider: ScenarioProvider,
+  node: ItemNode
+): Promise<MoveItemDestination | undefined> {
+  const destinations = provider.getCopyItemDestinations(node.scenarioId, node.data.id);
+  if (destinations.length === 0) {
+    await vscode.window.showInformationMessage(
+      "No valid destination is available for this item."
+    );
+    return undefined;
+  }
+
+  return vscode.window.showQuickPick(destinations, {
+    title: "Copy Item",
+    placeHolder: `Select a destination for a copy of "${node.data.name}"`,
     matchOnDescription: true,
     matchOnDetail: true,
   });

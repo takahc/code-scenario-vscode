@@ -33,6 +33,10 @@ export type MoveItemResult =
   | { ok: true }
   | { ok: false; reason: string; isNoOp?: boolean };
 
+export type CopyItemResult =
+  | { ok: true; itemId: string }
+  | { ok: false; reason: string };
+
 export class ScenarioProvider
   implements vscode.TreeDataProvider<TreeNode>
 {
@@ -223,6 +227,30 @@ export class ScenarioProvider
     sourceScenarioId: string,
     itemId: string
   ): MoveItemDestination[] {
+    return this.getItemDestinations(sourceScenarioId, itemId, {
+      excludeCurrentRoot: true,
+      excludeCurrentParent: true,
+    });
+  }
+
+  getCopyItemDestinations(
+    sourceScenarioId: string,
+    itemId: string
+  ): MoveItemDestination[] {
+    return this.getItemDestinations(sourceScenarioId, itemId, {
+      excludeCurrentRoot: false,
+      excludeCurrentParent: false,
+    });
+  }
+
+  private getItemDestinations(
+    sourceScenarioId: string,
+    itemId: string,
+    options: {
+      excludeCurrentRoot: boolean;
+      excludeCurrentParent: boolean;
+    }
+  ): MoveItemDestination[] {
     const sourceScenario = this.scenarios.find((scenario) => scenario.id === sourceScenarioId);
     if (!sourceScenario) {
       return [];
@@ -238,7 +266,7 @@ export class ScenarioProvider
     return this.scenarios.flatMap((scenario) => {
       const destinations: MoveItemDestination[] = [];
       const isCurrentRoot = scenario.id === sourceScenarioId && sourceEntry.parent === undefined;
-      if (!isCurrentRoot) {
+      if (!(options.excludeCurrentRoot && isCurrentRoot)) {
         destinations.push({
           scenarioId: scenario.id,
           label: `${scenario.name} › (scenario root)`,
@@ -252,7 +280,7 @@ export class ScenarioProvider
         scenario,
         blockedIds,
         sourceScenarioId,
-        sourceEntry.parent?.id
+        options.excludeCurrentParent ? sourceEntry.parent?.id : undefined
       );
 
       destinations.push(...itemDestinations);
@@ -332,6 +360,51 @@ export class ScenarioProvider
     await this.save();
     this.refresh();
     return { ok: true };
+  }
+
+  async copyItem(
+    sourceScenarioId: string,
+    itemId: string,
+    destinationScenarioId: string,
+    destinationParentItemId?: string
+  ): Promise<CopyItemResult> {
+    const sourceScenario = this.scenarios.find((scenario) => scenario.id === sourceScenarioId);
+    if (!sourceScenario) {
+      return { ok: false, reason: "Source scenario was not found." };
+    }
+
+    const sourceEntry = findItemEntry(sourceScenario.items, itemId);
+    if (!sourceEntry) {
+      return { ok: false, reason: "Item to copy was not found." };
+    }
+
+    const destinationScenario = this.scenarios.find((scenario) => scenario.id === destinationScenarioId);
+    if (!destinationScenario) {
+      return { ok: false, reason: "Destination scenario was not found." };
+    }
+
+    const blockedIds = new Set(collectItemIds(sourceEntry.item));
+    if (destinationParentItemId && blockedIds.has(destinationParentItemId)) {
+      return { ok: false, reason: "An item cannot be copied into itself or one of its descendants." };
+    }
+
+    let destinationChildren: ScenarioItemData[];
+    if (destinationParentItemId) {
+      const destinationParent = findItemById(destinationScenario.items, destinationParentItemId);
+      if (!destinationParent) {
+        return { ok: false, reason: "Destination parent item was not found." };
+      }
+      destinationChildren = destinationParent.children;
+    } else {
+      destinationChildren = destinationScenario.items;
+    }
+
+    const copiedItem = cloneItemWithFreshIds(sourceEntry.item);
+    destinationChildren.push(copiedItem);
+
+    await this.save();
+    this.refresh();
+    return { ok: true, itemId: copiedItem.id };
   }
 
   findItem(scenarioId: string, itemId: string): ScenarioItemData | undefined {
@@ -648,6 +721,14 @@ function countNestedItems(items: ScenarioItemData[]): number {
     (total, item) => total + 1 + countNestedItems(item.children),
     0
   );
+}
+
+function cloneItemWithFreshIds(item: ScenarioItemData): ScenarioItemData {
+  return {
+    ...item,
+    id: generateId(),
+    children: item.children.map((child) => cloneItemWithFreshIds(child)),
+  };
 }
 
 function formatCount(count: number, noun: string): string {
