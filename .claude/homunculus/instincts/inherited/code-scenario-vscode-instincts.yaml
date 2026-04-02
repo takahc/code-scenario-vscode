@@ -1,0 +1,432 @@
+# Instincts generated from https://github.com/takahc/code-scenario-vscode
+# Generated: 2026-04-02T09:21:49.566Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: code-scenario-vscode-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, refactor
+
+## Evidence
+
+- 8 commits analyzed
+- Detected conventional commit pattern
+- Examples: feat: add GitHub Actions workflow for publishing extension, refactor: address code review feedback
+
+---
+id: code-scenario-vscode-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Commit Length
+
+## Action
+
+Keep commit messages concise (~42 characters)
+
+## Evidence
+
+- Average commit message length: 42 chars
+- Based on 8 commits
+
+---
+id: code-scenario-vscode-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: code-scenario-vscode-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: code-scenario-vscode-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: code-scenario-vscode-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: code-scenario-vscode-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~19x per month
+- Files: src/*
+
+---
+id: code-scenario-vscode-workflow-add-new-feature-module
+trigger: "when doing add new feature module"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Workflow Add New Feature Module
+
+## Action
+
+Follow the add-new-feature-module workflow:
+1. Create or update TypeScript source files in src/ (e.g., scenarioModel.ts, scenarioProvider.ts, symbolResolver.ts, extension.ts)
+2. Add or update package.json with new commands, menus, or contributions
+3. Update or add configuration files such as tsconfig.json
+4. Add or update resource files (e.g., icons in resources/)
+5. Update .gitignore and .vscodeignore as needed
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: src/*.ts, package.json, tsconfig.json
+
+---
+id: code-scenario-vscode-workflow-add-or-update-project-configuration
+trigger: "when doing add or update project configuration"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Workflow Add Or Update Project Configuration
+
+## Action
+
+Follow the add-or-update-project-configuration workflow:
+1. Add or update configuration files in .github/workflows/ for CI/CD
+2. Add or update files in .vscode/ for local development tasks and launch settings
+3. Add or update LICENSE.txt
+4. Update package.json with publisher or repository information
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: .github/workflows/*.yml, .vscode/launch.json, .vscode/tasks.json
+
+---
+id: code-scenario-vscode-instinct-file-naming
+trigger: "When creating or renaming a file in the codebase"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct File Naming
+
+## Action
+
+Use camelCase for file names (e.g., scenarioProvider.ts)
+
+## Evidence
+
+- Pattern in files: src/scenarioModel.ts, src/scenarioProvider.ts
+
+---
+id: code-scenario-vscode-instinct-function-naming
+trigger: "When defining a function"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Function Naming
+
+## Action
+
+Use camelCase for function names
+
+## Evidence
+
+- Pattern in TypeScript code (inferred from naming conventions section)
+
+---
+id: code-scenario-vscode-instinct-class-naming
+trigger: "When defining a class"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Class Naming
+
+## Action
+
+Use PascalCase for class names
+
+## Evidence
+
+- Pattern in naming conventions
+
+---
+id: code-scenario-vscode-instinct-constant-naming
+trigger: "When declaring a constant"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Constant Naming
+
+## Action
+
+Use SCREAMING_SNAKE_CASE for constant names
+
+## Evidence
+
+- Pattern in naming conventions
+
+---
+id: code-scenario-vscode-instinct-import-style
+trigger: "When importing modules in TypeScript files"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Import Style
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Pattern in codeStyle.importStyle
+
+---
+id: code-scenario-vscode-instinct-export-style
+trigger: "When exporting from a TypeScript file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Export Style
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in codeStyle.exportStyle
+
+---
+id: code-scenario-vscode-instinct-testing-location
+trigger: "When adding or updating tests"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Testing Location
+
+## Action
+
+Place test files in a separate directory from src/
+
+## Evidence
+
+- architecture.folderStructure.testLocation is 'separate'
+
+---
+id: code-scenario-vscode-instinct-testing-pattern
+trigger: "When implementing a new feature"
+confidence: 0.75
+domain: testing
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Testing Pattern
+
+## Action
+
+Add corresponding tests after feature implementation
+
+## Evidence
+
+- workflows.feature-development.commitSequence includes 'Add tests for feature'
+
+---
+id: code-scenario-vscode-instinct-git-commit-format
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Git Commit Format
+
+## Action
+
+Use conventional commit prefixes (feat, refactor) followed by a colon and a short description
+
+## Evidence
+
+- commits.examples: 'feat: add GitHub Actions workflow for publishing extension', 'refactor: address code review feedback'
+
+---
+id: code-scenario-vscode-instinct-git-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Git Commit Length
+
+## Action
+
+Keep commit messages concise (average length ~42 characters)
+
+## Evidence
+
+- commits.averageLength: 42
+
+---
+id: code-scenario-vscode-instinct-add-feature-module
+trigger: "When adding a significant new feature or capability to the VS Code extension"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Add Feature Module
+
+## Action
+
+Create or update TypeScript files in src/, update package.json, tsconfig.json, resource files, and .gitignore/.vscodeignore as needed
+
+## Evidence
+
+- Workflow 'add-new-feature-module' steps and filesInvolved
+- Commits: 'Create or update TypeScript source files in src/...', 'Add or update package.json...'
+
+---
+id: code-scenario-vscode-instinct-update-project-config
+trigger: "When setting up, updating, or enhancing project configuration (e.g., CI/CD, launch tasks, licensing)"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Update Project Config
+
+## Action
+
+Add or update .github/workflows/*.yml, .vscode/launch.json, .vscode/tasks.json, LICENSE.txt, and package.json
+
+## Evidence
+
+- Workflow 'add-or-update-project-configuration' steps and filesInvolved
+- Commits: 'Add or update configuration files in .github/workflows/...', 'Update package.json with publisher or repository information'
+
