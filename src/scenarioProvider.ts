@@ -5,6 +5,8 @@ import { resolveScenarioItemLocation, ScenarioItemLocationResolution } from "./w
 // Union type for tree nodes
 export type TreeNode = ScenarioNode | ItemNode;
 
+const QUICK_ADD_SCENARIO_ID_KEY = "quickAddScenarioId";
+
 export class ScenarioNode {
   readonly kind = "scenario" as const;
   constructor(public readonly data: ScenarioData) {}
@@ -63,6 +65,23 @@ export class ScenarioProvider
 
   getScenarios(): ScenarioData[] {
     return this.scenarios;
+  }
+
+  getScenarioById(scenarioId: string): ScenarioData | undefined {
+    return this.scenarios.find((scenario) => scenario.id === scenarioId);
+  }
+
+  getQuickAddScenario(): ScenarioData | undefined {
+    const scenarioId = this.context.workspaceState.get<string>(QUICK_ADD_SCENARIO_ID_KEY);
+    if (!scenarioId) {
+      return undefined;
+    }
+
+    return this.getScenarioById(scenarioId);
+  }
+
+  async setQuickAddScenario(scenarioId: string | undefined): Promise<void> {
+    await this.context.workspaceState.update(QUICK_ADD_SCENARIO_ID_KEY, scenarioId);
   }
 
   async addScenario(name: string): Promise<void> {
@@ -269,7 +288,7 @@ export class ScenarioProvider
   }
 
   findItem(scenarioId: string, itemId: string): ScenarioItemData | undefined {
-    const scenario = this.scenarios.find((s) => s.id === scenarioId);
+    const scenario = this.getScenarioById(scenarioId);
     if (!scenario) { return undefined; }
     return findItemById(scenario.items, itemId);
   }

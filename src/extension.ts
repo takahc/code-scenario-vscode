@@ -200,7 +200,7 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        const target = await resolveAddTarget(provider);
+        const target = await resolveQuickAddTarget(provider);
         if (!target) {
           return;
         }
@@ -243,7 +243,7 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        const target = await resolveAddTarget(provider);
+        const target = await resolveQuickAddTarget(provider);
         if (!target) {
           return;
         }
@@ -262,6 +262,34 @@ export function activate(context: vscode.ExtensionContext): void {
 
         await vscode.window.showInformationMessage(
           `Added "${symbolName}" from "${fileReference.filePath}" to scenario "${target.scenarioName}".`
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.setQuickAddScenario",
+      async () => {
+        const scenarios = provider.getScenarios();
+        if (scenarios.length === 0) {
+          await vscode.window.showInformationMessage(
+            "Create a scenario before setting a quick add scenario."
+          );
+          return;
+        }
+
+        const scenario = await pickScenario(scenarios, {
+          title: "Set Quick Add Scenario",
+          placeHolder: "Select the default scenario for Quick Add",
+        });
+        if (!scenario) {
+          return;
+        }
+
+        await provider.setQuickAddScenario(scenario.id);
+        await vscode.window.showInformationMessage(
+          `Quick Add scenario set to "${scenario.name}".`
         );
       }
     )
@@ -567,7 +595,7 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {}
 
 function getScenarioName(provider: ScenarioProvider, scenarioId: string): string {
-  return provider.getScenarios().find((scenario) => scenario.id === scenarioId)?.name ?? "Scenario";
+  return provider.getScenarioById(scenarioId)?.name ?? "Scenario";
 }
 
 async function resolveAddTarget(
@@ -610,25 +638,80 @@ async function resolveAddTarget(
     };
   }
 
-  const selectedScenario = await vscode.window.showQuickPick(
-    scenarios.map((scenario) => ({
-      label: scenario.name,
-      description: `${scenario.items.length} item${scenario.items.length === 1 ? "" : "s"}`,
-      scenario,
-    })),
-    {
-      placeHolder: "Select a scenario for the new item",
-    }
-  );
+  const selectedScenario = await pickScenario(scenarios, {
+    placeHolder: "Select a scenario for the new item",
+  });
 
   if (!selectedScenario) {
     return undefined;
   }
 
   return {
-    scenarioId: selectedScenario.scenario.id,
-    scenarioName: selectedScenario.scenario.name,
+    scenarioId: selectedScenario.id,
+    scenarioName: selectedScenario.name,
   };
+}
+
+async function resolveQuickAddTarget(
+  provider: ScenarioProvider
+): Promise<{
+  scenarioId: string;
+  scenarioName: string;
+} | undefined> {
+  const scenarios = provider.getScenarios();
+  if (scenarios.length === 0) {
+    await vscode.window.showInformationMessage(
+      "Create a scenario before adding items."
+    );
+    return undefined;
+  }
+
+  if (scenarios.length === 1) {
+    return {
+      scenarioId: scenarios[0].id,
+      scenarioName: scenarios[0].name,
+    };
+  }
+
+  const rememberedScenario = provider.getQuickAddScenario();
+  if (rememberedScenario) {
+    return {
+      scenarioId: rememberedScenario.id,
+      scenarioName: rememberedScenario.name,
+    };
+  }
+
+  const selectedScenario = await pickScenario(scenarios, {
+    placeHolder: "Select a scenario for Quick Add",
+  });
+  if (!selectedScenario) {
+    return undefined;
+  }
+
+  await provider.setQuickAddScenario(selectedScenario.id);
+  return {
+    scenarioId: selectedScenario.id,
+    scenarioName: selectedScenario.name,
+  };
+}
+
+async function pickScenario(
+  scenarios: ScenarioData[],
+  options: {
+    title?: string;
+    placeHolder: string;
+  }
+): Promise<ScenarioData | undefined> {
+  const selectedScenario = await vscode.window.showQuickPick(
+    scenarios.map((scenario) => ({
+      label: scenario.name,
+      description: `${scenario.items.length} item${scenario.items.length === 1 ? "" : "s"}`,
+      scenario,
+    })),
+    options
+  );
+
+  return selectedScenario?.scenario;
 }
 
 async function resolveMoveDestination(
