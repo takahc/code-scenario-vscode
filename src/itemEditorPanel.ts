@@ -23,12 +23,27 @@ interface ItemEditorOptions {
   initialValue?: Partial<ItemEditorValues>;
 }
 
+interface ItemNoteEditorOptions {
+  scenarioName: string;
+  itemName: string;
+  initialNote?: string;
+}
+
+export type ItemNoteEditorResult =
+  | { action: "save"; note: string }
+  | { action: "clear" };
+
 type WebviewMessage =
   | { type: "submit"; value: ItemEditorValues }
   | { type: "cancel" }
   | { type: "fillActiveFile" }
   | { type: "fillSelection" }
   | { type: "browseFile" };
+
+type ItemNoteEditorMessage =
+  | { type: "submit"; value: { note: string } }
+  | { type: "clear" }
+  | { type: "cancel" };
 
 export async function showItemEditor(
   options: ItemEditorOptions
@@ -161,6 +176,58 @@ export async function showItemEditor(
               workspaceFolderUri: fileValidation.value.workspaceFolderUri ?? "",
             },
           });
+          return;
+        }
+      }
+    });
+  });
+}
+
+export async function showItemNoteEditor(
+  options: ItemNoteEditorOptions
+): Promise<ItemNoteEditorResult | undefined> {
+  const initialNote = options.initialNote ?? "";
+  const panel = vscode.window.createWebviewPanel(
+    "codeScenarioItemNoteEditor",
+    initialNote.trim() ? "Edit Item Note" : "Add Item Note",
+    vscode.ViewColumn.Active,
+    {
+      enableScripts: true,
+      retainContextWhenHidden: true,
+    }
+  );
+
+  panel.webview.html = getItemNoteEditorHtml(panel.webview, options, initialNote);
+
+  return new Promise<ItemNoteEditorResult | undefined>((resolve) => {
+    let settled = false;
+
+    const finish = (value: ItemNoteEditorResult | undefined) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve(value);
+    };
+
+    panel.onDidDispose(() => {
+      finish(undefined);
+    });
+
+    panel.webview.onDidReceiveMessage((message: ItemNoteEditorMessage) => {
+      switch (message.type) {
+        case "submit": {
+          finish({ action: "save", note: message.value.note });
+          panel.dispose();
+          return;
+        }
+        case "clear": {
+          finish({ action: "clear" });
+          panel.dispose();
+          return;
+        }
+        case "cancel": {
+          panel.dispose();
           return;
         }
       }
@@ -647,6 +714,207 @@ function getWebviewHtml(
         syncFormState();
       }
     });
+  </script>
+</body>
+</html>`;
+}
+
+function getItemNoteEditorHtml(
+  webview: vscode.Webview,
+  options: ItemNoteEditorOptions,
+  initialNote: string
+): string {
+  const nonce = getNonce();
+  const title = initialNote.trim() ? "Edit Item Note" : "Add Item Note";
+  const subtitle = `Scenario: ${options.scenarioName} / Item: ${options.itemName}`;
+  const serializedInitialNote = JSON.stringify(initialNote).replace(/</g, "\\u003c");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --surface: color-mix(in srgb, var(--vscode-editor-background) 88%, var(--vscode-sideBar-background));
+      --surface-alt: color-mix(in srgb, var(--vscode-editorWidget-background) 84%, transparent);
+      --border: var(--vscode-input-border, transparent);
+      --text: var(--vscode-editor-foreground);
+      --muted: var(--vscode-descriptionForeground);
+      --accent: var(--vscode-button-background);
+      --accent-text: var(--vscode-button-foreground);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: var(--vscode-font-family);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 18%, transparent), transparent 38%),
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, transparent), var(--vscode-editor-background));
+    }
+
+    .shell {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    form {
+      display: grid;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font: inherit;
+      color: var(--text);
+      background: var(--vscode-input-background);
+      resize: vertical;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font: inherit;
+      cursor: pointer;
+      color: var(--text);
+      background: var(--surface-alt);
+    }
+
+    button.primary {
+      border: none;
+      color: var(--accent-text);
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 72%, black));
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+
+      .shell {
+        padding: 18px;
+      }
+
+      .actions {
+        flex-direction: column-reverse;
+      }
+
+      .actions button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <h1>${escapeHtml(title)}</h1>
+    <p class="subtitle">${escapeHtml(subtitle)}</p>
+
+    <form id="noteForm">
+      <div>
+        <label for="itemNote">Note</label>
+      </div>
+      <textarea id="itemNote" name="itemNote" rows="8" placeholder="Optional plain-text note shown in the tree tooltip...">${escapeHtml(initialNote)}</textarea>
+      <div class="hint">Notes stay as plain text and appear in the item tooltip on hover. Save an empty note or use Clear Note to remove the note.</div>
+
+      <div class="actions">
+        <button type="button" id="cancelButton">Cancel</button>
+        <button type="button" id="clearButton">Clear Note</button>
+        <button type="submit" class="primary">Save Note</button>
+      </div>
+    </form>
+  </div>
+
+  <script nonce="${nonce}">
+    const vscode = acquireVsCodeApi();
+    const initialNote = ${serializedInitialNote};
+    const form = document.getElementById("noteForm");
+    const noteTextarea = document.getElementById("itemNote");
+    const clearButton = document.getElementById("clearButton");
+
+    noteTextarea.value = initialNote;
+
+    function syncState() {
+      clearButton.disabled = initialNote.length === 0 && noteTextarea.value.length === 0;
+    }
+
+    document.getElementById("cancelButton").addEventListener("click", () => {
+      vscode.postMessage({ type: "cancel" });
+    });
+
+    clearButton.addEventListener("click", () => {
+      vscode.postMessage({ type: "clear" });
+    });
+
+    noteTextarea.addEventListener("input", () => {
+      syncState();
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      vscode.postMessage({
+        type: "submit",
+        value: {
+          note: noteTextarea.value,
+        },
+      });
+    });
+
+    syncState();
+    noteTextarea.focus();
+    noteTextarea.setSelectionRange(noteTextarea.value.length, noteTextarea.value.length);
   </script>
 </body>
 </html>`;

@@ -226,8 +226,11 @@ label or description.
 
 **How to add or edit a note**
 
-Open the **Add Item** or **Edit Item** panel and fill in the **Notes** textarea at the bottom of
-the form. The field accepts multiple lines. Leave it empty to store no note; saving with an empty
-Notes field removes any previously stored note from that item.
+- **Quick tree shortcut:** right-click an item in the Code Scenario tree and choose **Edit
+  Note...**. A small note-only editor opens with the current note prefilled. Notes stay plain
+  text, support multiple lines, and can be cleared from the same flow with **Clear Note** or by
+  saving an empty note.
+- **Full item editor:** open the **Add Item** or **Edit Item** panel and fill in the **Notes**
+  textarea at the bottom of the form.
 
 Existing items without a note continue to behave exactly as before.

@@ -8,7 +8,11 @@ import {
   StaleItemMatch,
 } from "./scenarioProvider";
 import { ScenarioData, ScenarioItemData, ITEM_TYPES, ItemType } from "./scenarioModel";
-import { ItemEditorValues, showItemEditor } from "./itemEditorPanel";
+import {
+  ItemEditorValues,
+  showItemEditor,
+  showItemNoteEditor,
+} from "./itemEditorPanel";
 import { getActiveSelectionText } from "./editorContext";
 import { resolveItemLine } from "./symbolResolver";
 import {
@@ -548,6 +552,44 @@ export function activate(context: vscode.ExtensionContext): void {
           node.data.id,
           toScenarioItemUpdates(values)
         );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.quickEditItemNote",
+      async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Edit Note requires selecting an item in the Code Scenario sidebar."
+          );
+          return;
+        }
+
+        const result = await showItemNoteEditor({
+          scenarioName: getScenarioName(provider, node.scenarioId),
+          itemName: node.data.name,
+          initialNote: node.data.note,
+        });
+        if (!result) {
+          return;
+        }
+
+        if (result.action === "clear") {
+          if (node.data.note === undefined) {
+            return;
+          }
+          await provider.editItem(node.scenarioId, node.data.id, { note: undefined });
+          return;
+        }
+
+        const note = normalizeItemNote(result.note);
+        if (node.data.note === note) {
+          return;
+        }
+
+        await provider.editItem(node.scenarioId, node.data.id, { note });
       }
     )
   );
@@ -1220,7 +1262,7 @@ function toScenarioItemData(
 ): Omit<ScenarioItemData, "id" | "children"> {
   const filePath = values.filePath.trim();
   const symbolName = values.symbolName.trim();
-  const note = values.note?.trim() || undefined;
+  const note = normalizeItemNote(values.note);
   const base = createQuickItemData({
     kind: symbolName ? "symbol" : "file",
     type: values.type,
@@ -1238,12 +1280,17 @@ function toScenarioItemData(
 function toScenarioItemUpdates(
   values: ItemEditorValues
 ): Partial<Omit<ScenarioItemData, "id" | "children">> {
-  const note = values.note?.trim() || undefined;
+  const note = normalizeItemNote(values.note);
   return {
     ...toScenarioItemData(values),
     workspaceFolderUri: values.workspaceFolderUri,
     note, // explicitly included (possibly undefined) so editItem can clear a removed note
   };
+}
+
+function normalizeItemNote(note: string | undefined): string | undefined {
+  const normalized = note?.trim();
+  return normalized ? normalized : undefined;
 }
 
 function createQuickItemData(options: {
