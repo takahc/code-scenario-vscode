@@ -1,3 +1,4 @@
+import * as path from "path";
 import * as vscode from "vscode";
 import { ScenarioData, ScenarioItemData } from "./scenarioModel";
 import { resolveScenarioItemLocation, ScenarioItemLocationResolution } from "./workspacePaths";
@@ -61,6 +62,29 @@ export class ScenarioProvider
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
+  }
+
+  /**
+   * Called when VS Code renames or moves files/folders.
+   * Updates every scenario item whose resolved absolute path falls under an
+   * old URI so that bookmarks stay valid after rename/move operations.
+   *
+   * Both direct file renames and folder moves are handled: an item inside a
+   * renamed directory is detected via prefix matching on `oldUri.fsPath`.
+   */
+  async handleRenameFiles(
+    renames: ReadonlyArray<{ oldUri: vscode.Uri; newUri: vscode.Uri }>
+  ): Promise<void> {
+    let changed = false;
+    for (const scenario of this.scenarios) {
+      if (applyRenamesRecursively(scenario.items, renames)) {
+        changed = true;
+      }
+    }
+    if (changed) {
+      await this.save();
+      this.refresh();
+    }
   }
 
   getScenarios(): ScenarioData[] {
@@ -628,4 +652,102 @@ function shouldUseWarningStyling(location: ScenarioItemLocationResolution): bool
     location.reason === "fileMissing" ||
     location.reason === "workspaceFolderMissing"
   );
+}
+
+// ── File-rename helpers ───────────────────────────────────────
+
+/**
+ * Returns the unambiguous absolute path stored in an item, or `undefined` if
+ * the path cannot be resolved without filesystem access:
+ *   - Absolute filePath  → returned as-is (normalised).
+ *   - Relative filePath + workspaceFolderUri → joined with the folder's fsPath.
+ *   - Relative filePath, no workspaceFolderUri → skipped (ambiguous).
+ */
+function resolveItemAbsolutePathForRename(item: ScenarioItemData): string | undefined {
+  if (path.isAbsolute(item.filePath)) {
+    return path.normalize(item.filePath);
+  }
+
+  if (item.workspaceFolderUri) {
+    const folder = (vscode.workspace.workspaceFolders ?? []).find(
+      (f) => f.uri.toString() === item.workspaceFolderUri
+    );
+    if (folder) {
+      return path.join(folder.uri.fsPath, item.filePath);
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Mutates `item` in-place when any rename pair covers its absolute path.
+ * Returns `true` if the item was updated.
+ */
+function applyRenamesToItem(
+  item: ScenarioItemData,
+  renames: ReadonlyArray<{ oldUri: vscode.Uri; newUri: vscode.Uri }>
+): boolean {
+  const oldAbsPath = resolveItemAbsolutePathForRename(item);
+  if (oldAbsPath === undefined) {
+    return false;
+  }
+
+  for (const { oldUri, newUri } of renames) {
+    const oldFsPath = oldUri.fsPath;
+    const newFsPath = newUri.fsPath;
+
+    let newAbsPath: string | undefined;
+    if (oldAbsPath === oldFsPath) {
+      // Direct file rename / move
+      newAbsPath = newFsPath;
+    } else if (oldAbsPath.startsWith(oldFsPath + path.sep)) {
+      // Item lives inside a renamed/moved directory
+      newAbsPath = newFsPath + oldAbsPath.slice(oldFsPath.length);
+    }
+
+    if (newAbsPath !== undefined) {
+      const newFileUri = vscode.Uri.file(newAbsPath);
+      const newWorkspaceFolder = vscode.workspace.getWorkspaceFolder(newFileUri);
+
+      if (newWorkspaceFolder) {
+        // Keep workspace-relative storage, consistent with existing conventions
+        item.filePath = vscode.workspace.asRelativePath(newFileUri, false);
+        item.workspaceFolderUri = newWorkspaceFolder.uri.toString();
+      } else {
+        // New location is outside any open workspace folder — store as absolute
+        item.filePath = newAbsPath;
+        delete item.workspaceFolderUri;
+      }
+      // For file items the label is derived from item.name (which is
+      // initialised to filePath). Keep it in sync so the tree label
+      // reflects the new path. Symbol items keep their symbol name.
+      if (item.kind === "file") {
+        item.name = item.filePath;
+      }
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Recursively walks `items` and applies all renames. Returns `true` if any
+ * item in the subtree was modified.
+ */
+function applyRenamesRecursively(
+  items: ScenarioItemData[],
+  renames: ReadonlyArray<{ oldUri: vscode.Uri; newUri: vscode.Uri }>
+): boolean {
+  let changed = false;
+  for (const item of items) {
+    if (applyRenamesToItem(item, renames)) {
+      changed = true;
+    }
+    if (applyRenamesRecursively(item.children, renames)) {
+      changed = true;
+    }
+  }
+  return changed;
 }
