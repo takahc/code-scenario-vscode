@@ -926,6 +926,14 @@ async function resolveAddTarget(
     return undefined;
   }
 
+  const quickAddScenario = provider.getQuickAddScenario();
+  if (quickAddScenario) {
+    return {
+      scenarioId: quickAddScenario.id,
+      scenarioName: quickAddScenario.name,
+    };
+  }
+
   if (scenarios.length === 1) {
     return {
       scenarioId: scenarios[0].id,
