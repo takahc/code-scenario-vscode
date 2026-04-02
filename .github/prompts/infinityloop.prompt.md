@@ -22,6 +22,7 @@ Interpret `infinityloop` as: keep choosing and executing the next best concrete 
 ## Required behavior
 - Keep progress notes current when the plan or execution state changes.
 - Prefer the narrowest specialist for each step.
+- If a feature becomes releasable during the loop, follow the repository pre-release flow and publish a pre-release before stopping.
 - Return the final stop condition explicitly.
 - Summarize what was completed during the loop.
 
@@ -29,5 +30,6 @@ Interpret `infinityloop` as: keep choosing and executing the next best concrete 
 - Goal
 - Actions completed in this loop
 - Progress file created or updated
+- Pre-release action
 - Final stop condition
 - Remaining risks or requested user input

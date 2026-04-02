@@ -6,7 +6,7 @@ agent: "pm"
 ---
 Run the PM in continuous UX improvement mode.
 
-Interpret `infinityuxloop` as: repeatedly seek UX improvements from `idea-man`, prioritize them for user convenience, implement the best next item with the other specialists, then commit and push in appropriate units, and continue until a stop condition is reached.
+Interpret `infinityuxloop` as: repeatedly seek UX improvements from `idea-man`, prioritize them for user convenience, implement the best next item with the other specialists, then commit and push in appropriate units, publish a pre-release whenever a feature is complete, and continue until a stop condition is reached.
 
 ## Loop
 1. Ask `idea-man` for multiple UX improvement ideas grounded in the current product context.
@@ -21,7 +21,8 @@ Interpret `infinityuxloop` as: repeatedly seek UX improvements from `idea-man`, 
 6. If needed, use `descriptioner` for release-note or announcement wording.
 7. Check the current branch before any commit or push.
 8. If the branch is not `main` or `develop`, create or update the matching progress record, commit in the smallest correct logical unit, and push.
-9. Reassess and continue with the next UX improvement if another concrete iteration is available.
+9. When the implemented unit is feature-complete, follow the repository pre-release flow and publish a pre-release.
+10. Reassess and continue with the next UX improvement if another concrete iteration is available.
 
 ## Commit and Push Rules
 - Follow repository commit rules.
@@ -29,6 +30,11 @@ Interpret `infinityuxloop` as: repeatedly seek UX improvements from `idea-man`, 
 - Include the matching progress file in each commit.
 - Split commits when separate UX improvements or support changes can stand alone.
 - If the current branch is `main` or `develop`, stop before commit and push, and report that a working branch is required.
+
+## Pre-release Rule
+- If a feature reaches a releasable state, the PM must follow `.github/skills/pre-release/SKILL.md` and execute the pre-release publication flow.
+- Treat pre-release as mandatory for completed feature units, not as an optional extra.
+- Report whether pre-release was published, blocked, or deferred and why.
 
 ## Stop Conditions
 - No further meaningful UX improvement can be selected in this turn.
@@ -40,6 +46,7 @@ Interpret `infinityuxloop` as: repeatedly seek UX improvements from `idea-man`, 
 ## Required behavior
 - Keep high-difficulty but valuable ideas visible in the report.
 - Keep progress notes current when plan, implementation state, or verification status changes.
+- If a feature is done, do not stop before handling pre-release unless a repository rule or blocker prevents it.
 - Return the final stop condition explicitly.
 - Summarize what was ideated, selected, implemented, verified, committed, and pushed in this loop.
 
@@ -50,5 +57,6 @@ Interpret `infinityuxloop` as: repeatedly seek UX improvements from `idea-man`, 
 - Actions completed in this loop
 - Progress file created or updated
 - Commits and push status
+- Pre-release action
 - Final stop condition
 - Remaining high-value ideas or risks
