@@ -23,13 +23,15 @@ Code Scenario の次の UX 改善として、各シナリオ項目に任意メ�
 - checker が add/edit/relink/tooltip のノート経路を確認し、既存項目互換性に問題がないことを確認した。
 - `npm run compile` が成功し、今回の変更に対する TypeScript エラーがないことを確認した。
 - `npm run lint` が ESLint 設定ファイル欠如という既存リポジトリ課題で失敗することを再確認した。
+- Item Notes 機能コミット (`8eaa751`) が `pre-release` 上流にすでに取り込まれていることを確認した（`365340f merge: add optional item notes`）。
+- `feature/infinityuxloop` を `origin/pre-release` 上に `git rebase` し、ブランチを最新ベースへ移動した（機能コミットは重複のため自動スキップ）。
+- リベース後 `npm run compile` が成功し、コード整合性を確認した。
 
 ## Uncompleted
-- コミット作成。
-- pre-release への反映と preview 公開。
+- pre-release への追加反映（feature 側に新規差分なし）。
 
 ## Cautions
 ツリー行の `description` には既存のパス情報などが入っているため、メモ本文は行表示へ出さず tooltip のみに載せている。なお、`npm run lint` は今回の変更とは無関係に ESLint 設定ファイル不在で失敗する状態が続いている。
 
 ## Next Steps
-変更一式と progress を同じ論理単位でコミットし、pre-release フローで preview 公開まで進める。
+feature/infinityuxloop ブランチは最新 pre-release ベースに追いついた状態。必要であれば追加改善を乗せて pre-release フローで公開まで進める。
