@@ -1,11 +1,16 @@
 import * as vscode from "vscode";
 import { ITEM_TYPES, ItemType } from "./scenarioModel";
-import { getActiveSelectionText, getActiveWorkspaceFilePath } from "./editorContext";
+import { getActiveSelectionText } from "./editorContext";
+import {
+  getActiveWorkspaceFileReference,
+  validateWorkspaceFileInput,
+} from "./workspacePaths";
 
 export interface ItemEditorValues {
   filePath: string;
   symbolName: string;
   type: ItemType;
+  workspaceFolderUri?: string;
 }
 
 interface ItemEditorOptions {
@@ -56,20 +61,16 @@ export async function showItemEditor(
     panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
       switch (message.type) {
         case "submit": {
-          const validationMessage = validateValues(message.value);
-          if (validationMessage) {
+          const validationResult = validateValues(message.value);
+          if (validationResult.error) {
             void panel.webview.postMessage({
               type: "showError",
-              value: validationMessage,
+              value: validationResult.error,
             });
             return;
           }
 
-          finish({
-            filePath: message.value.filePath.trim(),
-            symbolName: message.value.symbolName.trim(),
-            type: message.value.type,
-          });
+          finish(validationResult.value);
           panel.dispose();
           return;
         }
@@ -81,7 +82,7 @@ export async function showItemEditor(
           const defaults = getActiveEditorDefaults();
           if (!defaults.filePath) {
             void vscode.window.showInformationMessage(
-              "No active editor file in the workspace was found."
+              "Open a file from the current workspace, then use Active File again."
             );
             return;
           }
@@ -90,16 +91,18 @@ export async function showItemEditor(
             type: "patchValues",
             value: {
               filePath: defaults.filePath,
-              ...(defaults.symbolName ? { symbolName: defaults.symbolName } : {}),
+              symbolName: "",
+              type: "file",
+              workspaceFolderUri: defaults.workspaceFolderUri ?? "",
             },
           });
           return;
         }
         case "fillSelection": {
-          const symbolName = getActiveSelectionText();
-          if (!symbolName) {
+          const defaults = getActiveEditorDefaults();
+          if (!defaults.symbolName || !defaults.filePath) {
             void vscode.window.showInformationMessage(
-              "Select a symbol-like identifier in the editor first."
+              "Select a symbol-like identifier in a file from the current workspace first."
             );
             return;
           }
@@ -107,8 +110,13 @@ export async function showItemEditor(
           void panel.webview.postMessage({
             type: "patchValues",
             value: {
-              symbolName,
-              type: "definition",
+              symbolName: defaults.symbolName,
+              ...(defaults.filePath
+                ? {
+                  filePath: defaults.filePath,
+                  workspaceFolderUri: defaults.workspaceFolderUri ?? "",
+                }
+                : {}),
             },
           });
           return;
@@ -123,31 +131,81 @@ function buildInitialValues(
 ): ItemEditorValues {
   const defaults = getActiveEditorDefaults();
   const symbolName = (initialValue?.symbolName ?? defaults.symbolName ?? "").trim();
+  const initialType = initialValue?.type;
 
   return {
     filePath: (initialValue?.filePath ?? defaults.filePath ?? "").trim(),
     symbolName,
-    type: initialValue?.type ?? (symbolName ? "definition" : "file"),
+    type: symbolName
+      ? initialType && initialType !== "file"
+        ? initialType
+        : "definition"
+      : "file",
+    workspaceFolderUri: initialValue?.workspaceFolderUri ?? defaults.workspaceFolderUri,
   };
 }
 
 function getActiveEditorDefaults(): Partial<ItemEditorValues> {
+  const activeFile = getActiveWorkspaceFileReference();
   return {
-    filePath: getActiveWorkspaceFilePath(),
+    filePath: activeFile?.filePath,
     symbolName: getActiveSelectionText(),
+    workspaceFolderUri: activeFile?.workspaceFolderUri,
   };
 }
 
-function validateValues(values: ItemEditorValues): string | undefined {
-  if (!values.filePath.trim()) {
-    return "File path is required.";
+function validateValues(
+  values: ItemEditorValues
+): { value: ItemEditorValues; error?: undefined } | { value?: undefined; error: string } {
+  const symbolName = values.symbolName.trim();
+  const fileValidation = validateWorkspaceFileInput(
+    values.filePath,
+    values.workspaceFolderUri
+  );
+  if (fileValidation.error) {
+    return {
+      error: fileValidation.error,
+    };
+  }
+  const validatedFile = fileValidation.value;
+  if (!validatedFile) {
+    return {
+      error: "Source file could not be validated. Check the file path and try again.",
+    };
   }
 
   if (!ITEM_TYPES.includes(values.type)) {
-    return "Invalid item type selected.";
+    return {
+      error: "Select a valid item type before saving.",
+    };
   }
 
-  return undefined;
+  if (symbolName.includes("\n")) {
+    return {
+      error: "Symbol name must stay on a single line. Remove line breaks and try again.",
+    };
+  }
+
+  if (!symbolName && values.type !== "file") {
+    return {
+      error: "Type must be File when Symbol Name is empty. Enter a symbol name or switch Type to File.",
+    };
+  }
+
+  if (symbolName && values.type === "file") {
+    return {
+      error: "Type cannot be File when Symbol Name is set. Choose a symbol type such as Definition, or clear Symbol Name.",
+    };
+  }
+
+  return {
+    value: {
+      filePath: validatedFile.filePath,
+      symbolName,
+      type: values.type,
+      workspaceFolderUri: validatedFile.workspaceFolderUri,
+    },
+  };
 }
 
 function getWebviewHtml(
@@ -167,7 +225,8 @@ function getWebviewHtml(
   const serializedInitialValue = JSON.stringify(initialValue).replace(/</g, "\\u003c");
   const typeOptions = ITEM_TYPES.map((type) => {
     const selected = type === initialValue.type ? " selected" : "";
-    return `<option value="${escapeHtml(type)}"${selected}>${escapeHtml(type)}</option>`;
+    const requiresSymbol = type === "file" ? "false" : "true";
+    return `<option value="${escapeHtml(type)}" data-requires-symbol="${requiresSymbol}"${selected}>${escapeHtml(type)}</option>`;
   }).join("");
 
   return `<!DOCTYPE html>
@@ -280,6 +339,15 @@ function getWebviewHtml(
       line-height: 1.5;
     }
 
+    .intent {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-alt);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
     .error {
       min-height: 20px;
       color: var(--danger);
@@ -323,21 +391,24 @@ function getWebviewHtml(
     </div>
 
     <form id="itemForm">
+      <div class="intent" id="intentText"></div>
+
       <div class="field">
         <label for="filePath">Source File</label>
         <input id="filePath" name="filePath" type="text" value="${escapeHtml(initialValue.filePath)}" placeholder="src/main.c" />
-        <div class="hint">Required. Paths are stored relative to the workspace root.</div>
+        <div class="hint" id="fileHint">Required. Use a workspace-relative path to an existing file, or click Use Active File.</div>
       </div>
 
       <div class="field">
         <label for="symbolName">Symbol Name</label>
         <input id="symbolName" name="symbolName" type="text" value="${escapeHtml(initialValue.symbolName)}" placeholder="usb_init" />
-        <div class="hint">Optional. Leave empty to register the file itself instead of a symbol.</div>
+        <div class="hint" id="symbolHint">Leave empty to create a file item. Add a symbol name to target something inside the file.</div>
       </div>
 
       <div class="field">
         <label for="itemType">Type</label>
         <select id="itemType" name="itemType">${typeOptions}</select>
+        <div class="hint" id="typeHint"></div>
       </div>
 
       <div class="error" id="errorText"></div>
@@ -358,16 +429,86 @@ function getWebviewHtml(
     const symbolNameInput = document.getElementById("symbolName");
     const itemTypeSelect = document.getElementById("itemType");
     const errorText = document.getElementById("errorText");
+    const intentText = document.getElementById("intentText");
+    const fileHint = document.getElementById("fileHint");
+    const symbolHint = document.getElementById("symbolHint");
+    const typeHint = document.getElementById("typeHint");
+    let workspaceFolderUri = initialValue.workspaceFolderUri || "";
+    let lastSymbolType = initialValue.type !== "file" ? initialValue.type : "definition";
+    let previousSymbolPresent = initialValue.symbolName.trim().length > 0;
 
     filePathInput.value = initialValue.filePath;
     symbolNameInput.value = initialValue.symbolName;
     itemTypeSelect.value = initialValue.type;
 
+    function clearError() {
+      errorText.textContent = "";
+    }
+
+    function hasSymbolName() {
+      return symbolNameInput.value.trim().length > 0;
+    }
+
+    function syncFormState() {
+      const symbolPresent = hasSymbolName();
+
+      Array.from(itemTypeSelect.options).forEach((option) => {
+        const requiresSymbol = option.dataset.requiresSymbol === "true";
+        option.disabled = symbolPresent ? !requiresSymbol : requiresSymbol;
+      });
+
+      if (symbolPresent) {
+        if (!previousSymbolPresent || itemTypeSelect.value === "file") {
+          itemTypeSelect.value = lastSymbolType;
+        }
+        if (itemTypeSelect.value !== "file") {
+          lastSymbolType = itemTypeSelect.value;
+        }
+        intentText.textContent = "Creating a symbol item. The source file locates the symbol, and Type describes how that symbol is used.";
+        symbolHint.textContent = "Symbol Name is set, so this item will target a symbol inside the source file.";
+        typeHint.textContent = "Choose a symbol-oriented type such as Definition, Call, or Reference.";
+      } else {
+        if (previousSymbolPresent && itemTypeSelect.value !== "file") {
+          lastSymbolType = itemTypeSelect.value;
+        }
+        itemTypeSelect.value = "file";
+        intentText.textContent = "Creating a file item. Leave Symbol Name empty to point at the file itself.";
+        symbolHint.textContent = "Leave Symbol Name empty for a file item, or add a symbol name to switch to symbol-oriented types.";
+        typeHint.textContent = "Only File is valid until you enter a symbol name.";
+      }
+
+      previousSymbolPresent = symbolPresent;
+
+      fileHint.textContent = filePathInput.value.trim()
+        ? "The file path should point to an existing file in the current workspace."
+        : "Required. Use a workspace-relative path to an existing file, or click Use Active File.";
+    }
+
+    function getClientValidationMessage() {
+      if (!filePathInput.value.trim()) {
+        return "Source file is required. Enter a file path or use Active File.";
+      }
+
+      if (!hasSymbolName() && itemTypeSelect.value !== "file") {
+        return "Type must be File when Symbol Name is empty.";
+      }
+
+      if (hasSymbolName() && itemTypeSelect.value === "file") {
+        return "Choose a symbol-oriented Type, or clear Symbol Name to create a file item.";
+      }
+
+      return "";
+    }
+
+    syncFormState();
+
     document.getElementById("useActiveFile").addEventListener("click", () => {
+      clearError();
       vscode.postMessage({ type: "fillActiveFile" });
     });
 
     document.getElementById("useSelection").addEventListener("click", () => {
+      clearError();
       vscode.postMessage({ type: "fillSelection" });
     });
 
@@ -375,15 +516,40 @@ function getWebviewHtml(
       vscode.postMessage({ type: "cancel" });
     });
 
+    filePathInput.addEventListener("input", () => {
+      clearError();
+      syncFormState();
+    });
+
+    symbolNameInput.addEventListener("input", () => {
+      clearError();
+      syncFormState();
+    });
+
+    itemTypeSelect.addEventListener("change", () => {
+      clearError();
+      if (itemTypeSelect.value !== "file") {
+        lastSymbolType = itemTypeSelect.value;
+      }
+      syncFormState();
+    });
+
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      errorText.textContent = "";
+      clearError();
+      syncFormState();
+      const clientValidationMessage = getClientValidationMessage();
+      if (clientValidationMessage) {
+        errorText.textContent = clientValidationMessage;
+        return;
+      }
       vscode.postMessage({
         type: "submit",
         value: {
           filePath: filePathInput.value,
           symbolName: symbolNameInput.value,
           type: itemTypeSelect.value,
+          workspaceFolderUri,
         },
       });
     });
@@ -396,7 +562,7 @@ function getWebviewHtml(
       }
 
       if (message.type === "patchValues") {
-        errorText.textContent = "";
+        clearError();
         if (typeof message.value.filePath === "string") {
           filePathInput.value = message.value.filePath;
         }
@@ -406,6 +572,12 @@ function getWebviewHtml(
         if (typeof message.value.type === "string") {
           itemTypeSelect.value = message.value.type;
         }
+        if ("workspaceFolderUri" in message.value) {
+          workspaceFolderUri = typeof message.value.workspaceFolderUri === "string"
+            ? message.value.workspaceFolderUri
+            : "";
+        }
+        syncFormState();
       }
     });
   </script>
@@ -418,7 +590,7 @@ function escapeHtml(value: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
 
