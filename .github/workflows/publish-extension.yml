@@ -1,0 +1,58 @@
+name: Publish Extension
+
+on:
+  push:
+    branches:
+      - main
+      - pre-release
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-extension-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set CI publish version
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const packageJsonPath = path.join(process.cwd(), 'package.json');
+          const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+          const [major, minor] = packageJson.version.split('.');
+          packageJson.version = `${major}.${minor}.${process.env.RUN_NUMBER}`;
+          fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+          console.log(`Publishing version ${packageJson.version}`);
+          EOF
+
+      - name: Publish stable extension
+        if: github.ref_name == 'main'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx @vscode/vsce publish --pat "$VSCE_PAT"
+
+      - name: Publish pre-release extension
+        if: github.ref_name == 'pre-release'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx @vscode/vsce publish --pre-release --pat "$VSCE_PAT"

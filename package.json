@@ -1,0 +1,100 @@
+{
+  "name": "code-scenario-vscode",
+  "displayName": "Code Scenario",
+  "description": "Organize and navigate code by scenarios with a sidebar tree view",
+  "publisher": "takahc",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/takahc/code-scenario-vscode"
+  },
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "code-scenario",
+          "title": "Code Scenario",
+          "icon": "resources/scenario.svg"
+        }
+      ]
+    },
+    "views": {
+      "code-scenario": [
+        {
+          "id": "codeScenarioView",
+          "name": "Scenarios"
+        }
+      ]
+    },
+    "commands": [
+      { "command": "code-scenario.addScenario", "title": "Add Scenario", "icon": "$(add)" },
+      { "command": "code-scenario.deleteScenario", "title": "Delete Scenario" },
+      { "command": "code-scenario.renameScenario", "title": "Rename Scenario" },
+      { "command": "code-scenario.addItem", "title": "Add Item", "icon": "$(add)" },
+      { "command": "code-scenario.editItem", "title": "Edit Item" },
+      { "command": "code-scenario.deleteItem", "title": "Delete Item" },
+      { "command": "code-scenario.refresh", "title": "Refresh", "icon": "$(refresh)" }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "code-scenario.addScenario",
+          "when": "view == codeScenarioView",
+          "group": "navigation"
+        },
+        {
+          "command": "code-scenario.refresh",
+          "when": "view == codeScenarioView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "code-scenario.renameScenario",
+          "when": "view == codeScenarioView && viewItem == scenario",
+          "group": "1_modify"
+        },
+        {
+          "command": "code-scenario.deleteScenario",
+          "when": "view == codeScenarioView && viewItem == scenario",
+          "group": "1_modify"
+        },
+        {
+          "command": "code-scenario.addItem",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioItem)",
+          "group": "1_modify"
+        },
+        {
+          "command": "code-scenario.editItem",
+          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "group": "1_modify"
+        },
+        {
+          "command": "code-scenario.deleteItem",
+          "when": "view == codeScenarioView && viewItem == scenarioItem",
+          "group": "1_modify"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.3.0"
+  }
+}
