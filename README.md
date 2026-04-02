@@ -41,6 +41,17 @@ Hover over any row in the Code Scenario sidebar to reveal action buttons directl
 
 All of these actions remain available in the right-click context menu as well.
 
+When **Add Item** is invoked without a specific tree row context (for example from the tree toolbar or
+Command Palette), Code Scenario now defaults to the saved **Quick Add target** scenario when that
+target still exists.
+
+- If a saved Quick Add target exists, **Add Item** opens directly for that scenario.
+- If no target is saved and exactly one scenario exists, that scenario is still used automatically.
+- If no target is saved and multiple scenarios exist, **Add Item** still prompts you to choose a
+  scenario.
+- Invoking **Add Item** from a scenario row or item row still uses that explicit row as the add
+  destination.
+
 ## Delete Undo
 
 After you confirm **Delete Scenario** or **Delete Item**, the extension shows a temporary
