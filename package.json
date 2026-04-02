@@ -70,6 +70,15 @@
         "command": "code-scenario.addScenario",
         "key": "ctrl+shift+alt+n",
         "when": "focusedView == codeScenarioView"
+      },
+      {
+        "command": "code-scenario.findScenarioItem",
+        "key": "ctrl+shift+alt+f"
+      },
+      {
+        "command": "code-scenario.revealActiveFileInTree",
+        "key": "ctrl+shift+alt+e",
+        "when": "editorTextFocus"
       }
     ],
     "configuration": {

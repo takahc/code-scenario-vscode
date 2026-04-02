@@ -121,6 +121,8 @@ All bindings use the `Ctrl+Shift+Alt` chord prefix to avoid conflicts with VS Co
 | `Ctrl+Shift+Alt+A` | Quick Add Current File to Scenario | Editor focused |
 | `Ctrl+Shift+Alt+S` | Quick Add Selected Symbol to Scenario | Editor focused + text selected |
 | `Ctrl+Shift+Alt+N` | Add Scenario | Code Scenario sidebar focused |
+| `Ctrl+Shift+Alt+F` | Find Scenario Item... | Always available |
+| `Ctrl+Shift+Alt+E` | Reveal Active File in Scenarios | Editor focused |
 
 > **Tip — common editing flow:** Open a file, press `Ctrl+Shift+Alt+A` to bookmark it to a
 > scenario. Select a function or class name, then press `Ctrl+Shift+Alt+S` to bookmark that
