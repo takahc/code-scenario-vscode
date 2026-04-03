@@ -15,6 +15,7 @@ export interface StaleItemMatch {
 }
 
 const QUICK_ADD_SCENARIO_ID_KEY = "quickAddScenarioId";
+const UNREAD_FOCUS_MODE_ENABLED_KEY = "unreadFocusModeEnabled";
 
 export class ScenarioNode {
   readonly kind = "scenario" as const;
@@ -78,6 +79,12 @@ type InsertionIndexResult =
   | { ok: true; index: number }
   | { ok: false; reason: string };
 
+interface TemporaryRevealState {
+  scenarioId: string;
+  targetItemId: string;
+  itemIds: ReadonlySet<string>;
+}
+
 export class ScenarioProvider
   implements vscode.TreeDataProvider<TreeNode>
 {
@@ -86,6 +93,8 @@ export class ScenarioProvider
 
   private scenarios: ScenarioData[] = [];
   private latestDeleted?: DeletedEntry;
+  private unreadFocusModeEnabled = false;
+  private temporaryRevealState?: TemporaryRevealState;
 
   constructor(private readonly context: vscode.ExtensionContext) {
     this.load();
@@ -97,6 +106,10 @@ export class ScenarioProvider
     this.scenarios = this.context.workspaceState.get<ScenarioData[]>(
       "scenarios",
       []
+    );
+    this.unreadFocusModeEnabled = this.context.workspaceState.get<boolean>(
+      UNREAD_FOCUS_MODE_ENABLED_KEY,
+      false
     );
   }
 
@@ -135,6 +148,90 @@ export class ScenarioProvider
 
   getScenarios(): ScenarioData[] {
     return this.scenarios;
+  }
+
+  isUnreadFocusModeEnabled(): boolean {
+    return this.unreadFocusModeEnabled;
+  }
+
+  async setUnreadFocusModeEnabled(enabled: boolean): Promise<void> {
+    const revealCleared = this.clearTemporaryRevealState();
+    if (this.unreadFocusModeEnabled === enabled) {
+      if (revealCleared) {
+        this.refresh();
+      }
+      return;
+    }
+
+    this.unreadFocusModeEnabled = enabled;
+    await this.context.workspaceState.update(UNREAD_FOCUS_MODE_ENABLED_KEY, enabled);
+    this.refresh();
+  }
+
+  async ensureItemVisible(itemNode: ItemNode): Promise<boolean> {
+    if (!this.unreadFocusModeEnabled || this.isNodeVisible(itemNode)) {
+      return false;
+    }
+
+    const revealPath = this.getRevealPath(itemNode.scenarioId, itemNode.data.id);
+    if (!revealPath) {
+      return false;
+    }
+
+    const nextState: TemporaryRevealState = {
+      scenarioId: itemNode.scenarioId,
+      targetItemId: itemNode.data.id,
+      itemIds: new Set(revealPath.map((item) => item.id)),
+    };
+    const changed = !hasSameTemporaryRevealState(this.temporaryRevealState, nextState);
+    this.temporaryRevealState = nextState;
+    if (changed) {
+      this.refresh();
+    }
+    return changed;
+  }
+
+  clearTemporaryRevealAfterUse(itemNode?: ItemNode): boolean {
+    if (!this.temporaryRevealState) {
+      return false;
+    }
+
+    if (
+      itemNode
+      && (this.temporaryRevealState.scenarioId !== itemNode.scenarioId
+        || this.temporaryRevealState.targetItemId !== itemNode.data.id)
+    ) {
+      return false;
+    }
+
+    return this.clearTemporaryRevealState();
+  }
+
+  isNodeVisible(node: TreeNode): boolean {
+    if (!this.unreadFocusModeEnabled) {
+      return true;
+    }
+
+    if (node.kind === "scenario") {
+      return scenarioHasUnreadItems(node.data);
+    }
+
+    const scenario = this.getScenarioById(node.scenarioId);
+    if (!scenario || !scenarioHasUnreadItems(scenario)) {
+      return false;
+    }
+
+    return itemHasUnreadInSubtree(node.data);
+  }
+
+  getViewMessage(): string | undefined {
+    if (!this.unreadFocusModeEnabled) {
+      return undefined;
+    }
+
+    return this.getVisibleScenarios().length === 0
+      ? "Unread Focus Mode is on. No unread items to show."
+      : undefined;
   }
 
   getScenarioById(scenarioId: string): ScenarioData | undefined {
@@ -821,12 +918,14 @@ export class ScenarioProvider
     if (node.kind === "scenario") {
       const totalItemCount = countScenarioItems(node.data);
       const topLevelItemCount = node.data.items.length;
-      const hasChildren = topLevelItemCount > 0;
+      const visibleChildren = this.getVisibleChildrenForScenario(node.data);
+      const hasVisibleChildren = visibleChildren.length > 0;
+      const hasAnyChildren = topLevelItemCount > 0;
       const staleCount = countStaleItems(node.data.items);
       const isQuickAddTarget = this.isQuickAddScenario(node.data.id);
       const item = new vscode.TreeItem(
         node.data.name,
-        hasChildren
+        hasVisibleChildren
           ? vscode.TreeItemCollapsibleState.Collapsed
           : vscode.TreeItemCollapsibleState.None
       );
@@ -841,7 +940,7 @@ export class ScenarioProvider
         isQuickAddTarget ? "Quick Add" : undefined,
         staleCount > 0 ? `⚠ ${staleCount} stale` : undefined,
       ].filter(Boolean).join(" · ");
-      item.tooltip = hasChildren
+      item.tooltip = hasAnyChildren
         ? `${node.data.name}\n${visitedCount}/${totalItemCount} read across ${formatCount(topLevelItemCount, "top-level item")}`
         : `${node.data.name}\nNo items yet`;
       if (isQuickAddTarget) {
@@ -852,11 +951,13 @@ export class ScenarioProvider
       }
       return item;
     } else {
-      const hasChildren = node.data.children.length > 0;
+      const visibleChildren = this.getVisibleChildrenForItem(node.data);
+      const hasVisibleChildren = visibleChildren.length > 0;
+      const hasAnyChildren = node.data.children.length > 0;
       const location = resolveScenarioItemLocation(node.data);
       const item = new vscode.TreeItem(
         node.data.name,
-        hasChildren
+        hasVisibleChildren
           ? vscode.TreeItemCollapsibleState.Collapsed
           : vscode.TreeItemCollapsibleState.None
       );
@@ -865,7 +966,7 @@ export class ScenarioProvider
       const descriptionParts = [
         node.data.kind === "symbol" ? node.data.type : undefined,
         node.data.filePath,
-        hasChildren ? formatCount(node.data.children.length, "child") : undefined,
+        hasAnyChildren ? formatCount(node.data.children.length, "child") : undefined,
         node.data.visited ? "read" : undefined,
         node.data.note ? "✎" : undefined,
       ].filter(Boolean);
@@ -874,7 +975,7 @@ export class ScenarioProvider
         ? "Click to open in the editor."
         : "Click to review file resolution or edit this item.";
       const noteSection = node.data.note ? `\n${node.data.note}` : "";
-      item.tooltip = hasChildren
+      item.tooltip = hasAnyChildren
         ? `${node.data.name} (${node.data.type})\n${node.data.filePath}\n${formatCount(node.data.children.length, "child")}${noteSection}\n${actionHint}`
         : `${node.data.name} (${node.data.type})\n${node.data.filePath}${noteSection}\n${actionHint}`;
       if (node.data.visited) {
@@ -928,15 +1029,94 @@ export class ScenarioProvider
 
   getChildren(node?: TreeNode): vscode.ProviderResult<TreeNode[]> {
     if (!node) {
-      return this.scenarios.map((s) => new ScenarioNode(s));
+      return this.getVisibleScenarios().map((s) => new ScenarioNode(s));
     }
     if (node.kind === "scenario") {
-      return node.data.items.map((i) => new ItemNode(i, node.data.id));
+      return this.getVisibleChildrenForScenario(node.data).map((i) => new ItemNode(i, node.data.id));
     }
     if (node.kind === "item") {
-      return node.data.children.map((c) => new ItemNode(c, node.scenarioId));
+      return this.getVisibleChildrenForItem(node.data).map((c) => new ItemNode(c, node.scenarioId));
     }
     return [];
+  }
+
+  private getVisibleScenarios(): ScenarioData[] {
+    if (!this.unreadFocusModeEnabled) {
+      return this.scenarios;
+    }
+
+    return this.scenarios.filter((scenario) =>
+      scenarioHasUnreadItems(scenario) || this.isScenarioTemporarilyVisible(scenario.id)
+    );
+  }
+
+  private getVisibleChildrenForScenario(scenario: ScenarioData): ScenarioItemData[] {
+    if (!this.unreadFocusModeEnabled) {
+      return scenario.items;
+    }
+
+    return scenario.items.filter((item) =>
+      itemHasUnreadInSubtree(item) || this.isItemTemporarilyVisible(scenario.id, item.id)
+    );
+  }
+
+  private getVisibleChildrenForItem(item: ScenarioItemData): ScenarioItemData[] {
+    if (!this.unreadFocusModeEnabled) {
+      return item.children;
+    }
+
+    return item.children.filter((child) =>
+      itemHasUnreadInSubtree(child) || this.isItemTemporarilyVisible(undefined, child.id)
+    );
+  }
+
+  private getRevealPath(
+    scenarioId: string,
+    itemId: string
+  ): ScenarioItemData[] | undefined {
+    const scenario = this.getScenarioById(scenarioId);
+    if (!scenario) {
+      return undefined;
+    }
+
+    return findItemPathById(scenario.items, itemId);
+  }
+
+  private isScenarioTemporarilyVisible(scenarioId: string): boolean {
+    return this.hasValidTemporaryRevealState(scenarioId);
+  }
+
+  private isItemTemporarilyVisible(
+    scenarioId: string | undefined,
+    itemId: string
+  ): boolean {
+    if (!this.hasValidTemporaryRevealState(scenarioId)) {
+      return false;
+    }
+
+    return this.temporaryRevealState?.itemIds.has(itemId) ?? false;
+  }
+
+  private clearTemporaryRevealState(): boolean {
+    if (!this.temporaryRevealState) {
+      return false;
+    }
+
+    this.temporaryRevealState = undefined;
+    return true;
+  }
+
+  private hasValidTemporaryRevealState(scenarioId?: string): boolean {
+    const revealState = this.temporaryRevealState;
+    if (!revealState) {
+      return false;
+    }
+
+    if (scenarioId && revealState.scenarioId !== scenarioId) {
+      return false;
+    }
+
+    return this.findItem(revealState.scenarioId, revealState.targetItemId) !== undefined;
   }
 }
 
@@ -987,6 +1167,49 @@ function findItemEntry(
   return undefined;
 }
 
+function findItemPathById(
+  items: ScenarioItemData[],
+  id: string
+): ScenarioItemData[] | undefined {
+  for (const item of items) {
+    if (item.id === id) {
+      return [item];
+    }
+
+    const childPath = findItemPathById(item.children, id);
+    if (childPath) {
+      return [item, ...childPath];
+    }
+  }
+
+  return undefined;
+}
+
+function hasSameTemporaryRevealState(
+  current: TemporaryRevealState | undefined,
+  next: TemporaryRevealState
+): boolean {
+  if (!current || current.scenarioId !== next.scenarioId) {
+    return false;
+  }
+
+  if (current.targetItemId !== next.targetItemId) {
+    return false;
+  }
+
+  if (current.itemIds.size !== next.itemIds.size) {
+    return false;
+  }
+
+  for (const itemId of current.itemIds) {
+    if (!next.itemIds.has(itemId)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function collectItemIds(item: ScenarioItemData): string[] {
   return [
     item.id,
@@ -1035,6 +1258,18 @@ function collectMoveDestinations(
 
 function countScenarioItems(scenario: ScenarioData): number {
   return countNestedItems(scenario.items);
+}
+
+function scenarioHasUnreadItems(scenario: ScenarioData): boolean {
+  return scenario.items.some((item) => itemHasUnreadInSubtree(item));
+}
+
+function itemHasUnreadInSubtree(item: ScenarioItemData): boolean {
+  if (!item.visited) {
+    return true;
+  }
+
+  return item.children.some((child) => itemHasUnreadInSubtree(child));
 }
 
 function countStaleItems(items: ScenarioItemData[]): number {

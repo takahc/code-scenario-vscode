@@ -26,6 +26,7 @@ const DRAG_MIME = "application/vnd.code-scenario-item";
 
 /** MIME type used for scenario-row reorder drag-and-drop. */
 const DRAG_MIME_SCENARIO = "application/vnd.code-scenario-scenario";
+const UNREAD_FOCUS_MODE_CONTEXT_KEY = "codeScenario.unreadFocusModeEnabled";
 
 export function activate(context: vscode.ExtensionContext): void {
   const provider = new ScenarioProvider(context);
@@ -130,6 +131,15 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(treeView);
 
+  const updateUnreadFocusModeUi = () => {
+    treeView.message = provider.getViewMessage();
+    void vscode.commands.executeCommand(
+      "setContext",
+      UNREAD_FOCUS_MODE_CONTEXT_KEY,
+      provider.isUnreadFocusModeEnabled()
+    );
+  };
+
   const quickAddStatusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
@@ -145,11 +155,31 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     provider.onDidChangeTreeData(() => {
       updateQuickAddStatusBar();
+      updateUnreadFocusModeUi();
     })
   );
   updateQuickAddStatusBar();
+  updateUnreadFocusModeUi();
 
   // ── Commands ──────────────────────────────────────────────────
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.enableUnreadFocusMode",
+      async () => {
+        await provider.setUnreadFocusModeEnabled(true);
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.disableUnreadFocusMode",
+      async () => {
+        await provider.setUnreadFocusModeEnabled(false);
+      }
+    )
+  );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("code-scenario.addScenario", async () => {
@@ -876,7 +906,7 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        await revealItemNode(treeView, selected.match.node);
+        await revealItemNode(provider, treeView, selected.match.node);
         await vscode.commands.executeCommand("code-scenario.relinkItem", selected.match.node);
       }
     )
@@ -915,7 +945,7 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        await revealItemNode(treeView, selected.match.node);
+        await revealItemNode(provider, treeView, selected.match.node);
         await vscode.commands.executeCommand("code-scenario.openItem", selected.match.node);
       }
     )
@@ -945,11 +975,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }
 
         if (matches.length === 1) {
-          await treeView.reveal(matches[0].node, {
-            select: true,
-            focus: false,
-            expand: true,
-          });
+          await revealItemNode(provider, treeView, matches[0].node);
           return;
         }
 
@@ -969,11 +995,7 @@ export function activate(context: vscode.ExtensionContext): void {
         );
 
         if (selected) {
-          await treeView.reveal(selected.match.node, {
-            select: true,
-            focus: false,
-            expand: true,
-          });
+          await revealItemNode(provider, treeView, selected.match.node);
         }
       }
     )
@@ -1048,6 +1070,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
         const firstItem = flatItems[0];
         const opened = await activateWalkthroughItem(
+          provider,
           firstItem,
           treeView,
           setWalkthroughPosition
@@ -1086,7 +1109,12 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        await activateWalkthroughItem(firstUnreadItem, treeView, setWalkthroughPosition);
+        await activateWalkthroughItem(
+          provider,
+          firstUnreadItem,
+          treeView,
+          setWalkthroughPosition
+        );
       }
     )
   );
@@ -1133,11 +1161,7 @@ export function activate(context: vscode.ExtensionContext): void {
           return; // No toast in auto-reveal mode
         }
 
-        void treeView.reveal(matches[0].node, {
-          select: true,
-          focus: false,
-          expand: true,
-        });
+        void revealItemNode(provider, treeView, matches[0].node);
       }, 300);
     })
   );
@@ -1744,7 +1768,7 @@ async function checkQuickAddDuplicate(
 
   if (action === "Reveal") {
     if (duplicates.length === 1) {
-      await revealItemNode(treeView, duplicates[0]);
+      await revealItemNode(provider, treeView, duplicates[0]);
     } else {
       // Multiple duplicates — let the user choose which to reveal.
       const selected = await vscode.window.showQuickPick(
@@ -1761,7 +1785,7 @@ async function checkQuickAddDuplicate(
         }
       );
       if (selected) {
-        await revealItemNode(treeView, selected.node);
+        await revealItemNode(provider, treeView, selected.node);
       }
     }
   }
@@ -1780,7 +1804,7 @@ async function revealDroppedItem(
 ): Promise<void> {
   const data = provider.findItem(scenarioId, itemId);
   if (!data) { return; }
-  await revealItemNode(treeView, new ItemNode(data, scenarioId));
+  await revealItemNode(provider, treeView, new ItemNode(data, scenarioId));
 }
 
 // ── Reveal helpers ────────────────────────────────────────────
@@ -1911,9 +1935,11 @@ function formatStaleItemRepairDetail(match: StaleItemMatch): string {
 }
 
 async function revealItemNode(
+  provider: ScenarioProvider,
   treeView: vscode.TreeView<TreeNode>,
   node: ItemNode
 ): Promise<void> {
+  await provider.ensureItemVisible(node);
   try {
     await treeView.reveal(node, {
       select: true,
@@ -1922,6 +1948,8 @@ async function revealItemNode(
     });
   } catch {
     // reveal can throw if the view is not visible; swallow silently
+  } finally {
+    provider.clearTemporaryRevealAfterUse(node);
   }
 }
 
@@ -1944,6 +1972,7 @@ async function showDeleteUndoNotification(
 // ── Sequential walkthrough helpers ───────────────────────────
 
 async function activateWalkthroughItem(
+  provider: ScenarioProvider,
   targetNode: ItemNode,
   treeView: vscode.TreeView<TreeNode>,
   setPosition: (pos: { scenarioId: string; itemId: string } | undefined) => void
@@ -1957,7 +1986,7 @@ async function activateWalkthroughItem(
   }
 
   setPosition({ scenarioId: targetNode.scenarioId, itemId: targetNode.data.id });
-  await revealItemNode(treeView, targetNode);
+  await revealItemNode(provider, treeView, targetNode);
   return true;
 }
 
@@ -2071,7 +2100,12 @@ async function stepWalkthrough(
   }
 
   const targetNode = flatItems[nextIndex];
-  const opened = await activateWalkthroughItem(targetNode, treeView, setPosition);
+  const opened = await activateWalkthroughItem(
+    provider,
+    targetNode,
+    treeView,
+    setPosition
+  );
   if (!opened) {
     return;
   }
