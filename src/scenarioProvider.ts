@@ -95,6 +95,7 @@ export class ScenarioProvider
   private latestDeleted?: DeletedEntry;
   private unreadFocusModeEnabled = false;
   private temporaryRevealState?: TemporaryRevealState;
+  private activeFileReference: { filePath: string; workspaceFolderUri?: string } | undefined;
 
   constructor(private readonly context: vscode.ExtensionContext) {
     this.load();
@@ -120,6 +121,18 @@ export class ScenarioProvider
   // ── Public API ───────────────────────────────────────────────
 
   refresh(): void {
+    this._onDidChangeTreeData.fire();
+  }
+
+  /**
+   * Updates the active-file reference used to highlight matching tree items.
+   * Pass `undefined` to clear the highlight (e.g. when no workspace file is active).
+   * Fires a tree-data-changed event so icons repaint immediately.
+   */
+  setActiveFileReference(
+    ref: { filePath: string; workspaceFolderUri?: string } | undefined
+  ): void {
+    this.activeFileReference = ref;
     this._onDidChangeTreeData.fire();
   }
 
@@ -1010,6 +1023,10 @@ export class ScenarioProvider
           "warning",
           new vscode.ThemeColor("list.warningForeground")
         );
+      } else if (this.isActiveFileMatch(node.data)) {
+        item.iconPath = node.data.kind === "file"
+          ? new vscode.ThemeIcon("go-to-file", new vscode.ThemeColor("list.highlightForeground"))
+          : new vscode.ThemeIcon("symbol-function", new vscode.ThemeColor("list.highlightForeground"));
       }
 
       // Command to open the file when clicked
@@ -1133,6 +1150,23 @@ export class ScenarioProvider
     }
 
     return this.findItem(revealState.scenarioId, revealState.targetItemId) !== undefined;
+  }
+
+  // ── Private helpers ───────────────────────────────────────────
+
+  /**
+   * Returns true when `item`'s file path matches the currently tracked active
+   * file reference. An item without a `workspaceFolderUri` is treated as
+   * potentially matching any folder (consistent with reveal/duplicate logic).
+   */
+  private isActiveFileMatch(item: ScenarioItemData): boolean {
+    if (!this.activeFileReference) { return false; }
+    const pathMatches = item.filePath === this.activeFileReference.filePath;
+    const folderMatches =
+      item.workspaceFolderUri === undefined ||
+      this.activeFileReference.workspaceFolderUri === undefined ||
+      item.workspaceFolderUri === this.activeFileReference.workspaceFolderUri;
+    return pathMatches && folderMatches;
   }
 }
 

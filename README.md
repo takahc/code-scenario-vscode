@@ -277,6 +277,14 @@ in the Code Scenario tree — the reverse of clicking an item to open it.
 - **No match** — an informational message is shown.
 - **Untitled or non-workspace files** — the command exits silently without an error.
 
+### Active-file highlight
+
+Matching scenario items are **passively highlighted** in the tree whenever their source file is
+the active editor — no command needed. File items show a tinted `go-to-file` icon; symbol items
+keep the `symbol-function` icon with the same highlight tint. The highlight updates automatically
+as you switch editors and clears when no matching item exists. Tree selection, scroll position,
+and focus are never affected.
+
 ### How to invoke
 
 | Method | Action |
