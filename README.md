@@ -170,6 +170,7 @@ Scenario items now keep a lightweight **read** state.
 - An item becomes **read** only after **Open Item** succeeds (including walkthrough/search flows that actually open it).
 - Reveal-only actions such as **Reveal Active File in Scenarios** do not mark items as read.
 - Item context menus now offer **Mark as Read** / **Mark as Unread** so you can adjust progress without opening the target.
+- Item context menus also offer **Mark Branch as Read** / **Mark Branch as Unread** to recursively update the selected item and all its descendants in one step.
 - Item rows show a subtle `read` hint in the description column.
 - Scenario rows show progress such as `3/12 read`.
 - Copied items start unread; moved items keep their existing read state.

@@ -504,6 +504,31 @@ export class ScenarioProvider
     return markedCount;
   }
 
+  async setSubtreeVisited(
+    scenarioId: string,
+    itemId: string,
+    visited: boolean
+  ): Promise<"updated" | "noop" | "notFound"> {
+    const scenario = this.scenarios.find((entry) => entry.id === scenarioId);
+    if (!scenario) {
+      return "notFound";
+    }
+
+    const item = findItemById(scenario.items, itemId);
+    if (!item) {
+      return "notFound";
+    }
+
+    const changedCount = setSubtreeVisitedState(item, visited);
+    if (changedCount === 0) {
+      return "noop";
+    }
+
+    await this.save();
+    this.refresh();
+    return "updated";
+  }
+
   async deleteItem(scenarioId: string, itemId: string): Promise<string | undefined> {
     const scenario = this.scenarios.find((s) => s.id === scenarioId);
     if (!scenario) { return undefined; }
@@ -1385,6 +1410,15 @@ function markAllVisited(items: ScenarioItemData[]): number {
     item.visited = true;
     return total + selfCount + markAllVisited(item.children);
   }, 0);
+}
+
+function setSubtreeVisitedState(item: ScenarioItemData, visited: boolean): number {
+  const selfCount = Boolean(item.visited) === visited ? 0 : 1;
+  item.visited = visited;
+  return item.children.reduce(
+    (total, child) => total + setSubtreeVisitedState(child, visited),
+    selfCount
+  );
 }
 
 function getItemContextValue(

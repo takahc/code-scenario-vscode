@@ -49,6 +49,8 @@
       { "command": "code-scenario.openItem", "title": "Open Item", "icon": "$(go-to-file)" },
       { "command": "code-scenario.markItemRead", "title": "Mark as Read", "icon": "$(pass)" },
       { "command": "code-scenario.markItemUnread", "title": "Mark as Unread", "icon": "$(circle-large-outline)" },
+      { "command": "code-scenario.markBranchRead", "title": "Mark Branch as Read", "icon": "$(pass-filled)" },
+      { "command": "code-scenario.markBranchUnread", "title": "Mark Branch as Unread", "icon": "$(circle-large-outline)" },
       { "command": "code-scenario.renameItem", "title": "Rename Item" },
       { "command": "code-scenario.moveItem", "title": "Move Item..." },
       { "command": "code-scenario.copyItem", "title": "Copy Item..." },
@@ -292,6 +294,16 @@
           "group": "3_progress"
         },
         {
+          "command": "code-scenario.markBranchRead",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
+          "group": "3_progress"
+        },
+        {
+          "command": "code-scenario.markBranchUnread",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
+          "group": "3_progress"
+        },
+        {
           "command": "code-scenario.moveItem",
           "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "4_modify"
@@ -341,6 +353,14 @@
         },
         {
           "command": "code-scenario.markItemUnread",
+          "when": "false"
+        },
+        {
+          "command": "code-scenario.markBranchRead",
+          "when": "false"
+        },
+        {
+          "command": "code-scenario.markBranchUnread",
           "when": "false"
         },
         {

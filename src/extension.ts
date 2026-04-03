@@ -345,6 +345,48 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.markBranchRead",
+      async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Mark Branch as Read is only available from an item context menu."
+          );
+          return;
+        }
+
+        const result = await provider.setSubtreeVisited(node.scenarioId, node.data.id, true);
+        if (result === "notFound") {
+          await vscode.window.showWarningMessage(
+            `Item "${node.data.name}" was not found.`
+          );
+        }
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.markBranchUnread",
+      async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Mark Branch as Unread is only available from an item context menu."
+          );
+          return;
+        }
+
+        const result = await provider.setSubtreeVisited(node.scenarioId, node.data.id, false);
+        if (result === "notFound") {
+          await vscode.window.showWarningMessage(
+            `Item "${node.data.name}" was not found.`
+          );
+        }
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.renameItem",
       async (node: ItemNode) => {
         if (!(node instanceof ItemNode)) {
