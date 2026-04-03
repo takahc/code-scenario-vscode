@@ -233,6 +233,44 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.editScenarioNote",
+      async (node?: ScenarioNode) => {
+        const scenario = await resolveScenarioSelection(provider, node, {
+          title: "Edit Scenario Note",
+          placeHolder: "Select a scenario to edit its note",
+          emptyStateMessage: "Create a scenario before adding a note.",
+        });
+        if (!scenario) {
+          return;
+        }
+
+        const result = await showItemNoteEditor({
+          scenarioName: scenario.name,
+          initialNote: scenario.note,
+        });
+        if (!result) {
+          return;
+        }
+
+        if (result.action === "clear") {
+          if (scenario.note === undefined) {
+            return;
+          }
+          await provider.editScenarioNote(scenario.id, undefined);
+          return;
+        }
+
+        const note = normalizeItemNote(result.note);
+        if (scenario.note === note) {
+          return;
+        }
+        await provider.editScenarioNote(scenario.id, note);
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.resetScenarioVisitedState",
       async (node?: ScenarioNode) => {
         const scenario = await resolveScenarioSelection(provider, node, {
@@ -1571,6 +1609,7 @@ async function pickScenario(
     scenarios.map((scenario) => ({
       label: scenario.name,
       description: `${scenario.items.length} item${scenario.items.length === 1 ? "" : "s"}`,
+      detail: scenario.note,
       scenario,
     })),
     options
@@ -1609,17 +1648,24 @@ function createQuickAddScenarioPicks(
   scenarios: ScenarioData[],
   quickAddScenario: ScenarioData | undefined
 ): QuickAddScenarioPick[] {
-  const picks: QuickAddScenarioPick[] = scenarios.map((scenario) => ({
-    label: scenario.name,
-    description: quickAddScenario?.id === scenario.id
-      ? "Current Quick Add target"
-      : `${scenario.items.length} item${scenario.items.length === 1 ? "" : "s"}`,
-    detail: quickAddScenario?.id === scenario.id
-      ? `${scenario.items.length} item${scenario.items.length === 1 ? "" : "s"}`
-      : undefined,
-    action: "set",
-    scenario,
-  }));
+  const picks: QuickAddScenarioPick[] = scenarios.map((scenario) => {
+    const isCurrentTarget = quickAddScenario?.id === scenario.id;
+    const countLabel = `${scenario.items.length} item${scenario.items.length === 1 ? "" : "s"}`;
+    const detailParts: string[] = [];
+    if (isCurrentTarget) {
+      detailParts.push(countLabel);
+    }
+    if (scenario.note) {
+      detailParts.push(scenario.note);
+    }
+    return {
+      label: scenario.name,
+      description: isCurrentTarget ? "Current Quick Add target" : countLabel,
+      detail: detailParts.length > 0 ? detailParts.join(" · ") : undefined,
+      action: "set" as const,
+      scenario,
+    };
+  });
 
   if (quickAddScenario) {
     picks.push({

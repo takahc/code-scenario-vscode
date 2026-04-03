@@ -324,6 +324,25 @@ Auto-reveal is **off by default** to avoid disrupting the tree's scroll position
 state during normal editing. When enabled it is debounced (300 ms), does not steal keyboard
 focus, and shows no notification when no match is found.
 
+## Scenario Notes
+
+Each scenario can carry an optional free-text note or description. The note is stored with the
+scenario and displayed in the scenario tooltip when you hover over the row in the tree. Scenarios
+that have a note also show a **✎** indicator appended to the description column. The note also
+appears as detail text in any scenario quick-pick (scenario selection dropdowns), making it easy
+to distinguish scenarios at a glance.
+
+**How to add or edit a scenario note**
+
+- **Context menu:** right-click a scenario in the Code Scenario tree and choose **Edit Scenario
+  Note...**. A note editor opens with the current note prefilled. Notes stay plain text, support
+  multiple lines, and can be cleared from the same flow with **Clear Note** or by saving an empty
+  note.
+- **Command Palette:** run **Edit Scenario Note...** — if you have multiple scenarios you will be
+  prompted to pick one first.
+
+Existing scenarios without a note continue to behave exactly as before.
+
 ## Item Notes
 
 Each scenario item can carry an optional free-text note. Notes are stored with the item and

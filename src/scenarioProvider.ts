@@ -354,6 +354,19 @@ export class ScenarioProvider
     }
   }
 
+  async editScenarioNote(scenarioId: string, note: string | undefined): Promise<void> {
+    const scenario = this.scenarios.find((s) => s.id === scenarioId);
+    if (scenario) {
+      if (note) {
+        scenario.note = note;
+      } else {
+        delete scenario.note;
+      }
+      await this.save();
+      this.refresh();
+    }
+  }
+
   async addItem(
     parentScenarioId: string,
     parentItemId: string | undefined,
@@ -997,12 +1010,16 @@ export class ScenarioProvider
         totalItemCount > 0 ? `${visitedCount}/${totalItemCount} read` : formatCount(totalItemCount, "item"),
         isQuickAddTarget ? "Quick Add" : undefined,
         staleCount > 0 ? `⚠ ${staleCount} stale` : undefined,
+        node.data.note ? "✎" : undefined,
       ].filter(Boolean).join(" · ");
       item.tooltip = hasAnyChildren
         ? `${node.data.name}\n${visitedCount}/${totalItemCount} read across ${formatCount(topLevelItemCount, "top-level item")}`
         : `${node.data.name}\nNo items yet`;
       if (isQuickAddTarget) {
         item.tooltip = `${item.tooltip}\nQuick Add target for editor-driven adds`;
+      }
+      if (node.data.note) {
+        item.tooltip = `${item.tooltip}\n${node.data.note}`;
       }
       if (staleCount > 0) {
         item.tooltip = `${item.tooltip}\n⚠ ${staleCount} stale item(s) — file path cannot be resolved`;

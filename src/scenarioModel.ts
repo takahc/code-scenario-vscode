@@ -34,6 +34,8 @@ export interface ScenarioItemData {
 export interface ScenarioData {
   id: string;
   name: string;
+  /** Optional free-text note attached to this scenario */
+  note?: string;
   items: ScenarioItemData[];
 }
 

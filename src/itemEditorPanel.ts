@@ -26,7 +26,7 @@ interface ItemEditorOptions {
 
 interface ItemNoteEditorOptions {
   scenarioName: string;
-  itemName: string;
+  itemName?: string;
   initialNote?: string;
 }
 
@@ -190,7 +190,7 @@ export async function showItemNoteEditor(
   const initialNote = options.initialNote ?? "";
   const panel = vscode.window.createWebviewPanel(
     "codeScenarioItemNoteEditor",
-    initialNote.trim() ? "Edit Item Note" : "Add Item Note",
+    initialNote.trim() ? "Edit Note" : "Add Note",
     vscode.ViewColumn.Active,
     {
       enableScripts: true,
@@ -728,8 +728,10 @@ function getItemNoteEditorHtml(
   initialNote: string
 ): string {
   const nonce = getNonce();
-  const title = initialNote.trim() ? "Edit Item Note" : "Add Item Note";
-  const subtitle = `Scenario: ${options.scenarioName} / Item: ${options.itemName}`;
+  const title = initialNote.trim() ? "Edit Note" : "Add Note";
+  const subtitle = options.itemName
+    ? `Scenario: ${options.scenarioName} / Item: ${options.itemName}`
+    : `Scenario: ${options.scenarioName}`;
   const serializedInitialNote = JSON.stringify(initialNote).replace(/</g, "\\u003c");
 
   return `<!DOCTYPE html>
