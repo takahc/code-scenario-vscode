@@ -1097,6 +1097,10 @@ export class ScenarioProvider
         item.iconPath = node.data.kind === "file"
           ? new vscode.ThemeIcon("go-to-file", new vscode.ThemeColor("list.highlightForeground"))
           : new vscode.ThemeIcon("symbol-function", new vscode.ThemeColor("list.highlightForeground"));
+      } else if (this.isReadStateIndicatorEnabled() && !node.data.visited) {
+        item.iconPath = node.data.kind === "file"
+          ? new vscode.ThemeIcon("file", new vscode.ThemeColor("editorInfo.foreground"))
+          : new vscode.ThemeIcon("symbol-function", new vscode.ThemeColor("editorInfo.foreground"));
       }
 
       // Command to open the file when clicked
@@ -1223,6 +1227,17 @@ export class ScenarioProvider
   }
 
   // ── Private helpers ───────────────────────────────────────────
+
+  /**
+   * Returns true when the `codeScenario.showReadStateIndicator` setting is
+   * enabled. Read at call-time so changes take effect on the next tree refresh
+   * without requiring an extension restart.
+   */
+  private isReadStateIndicatorEnabled(): boolean {
+    return vscode.workspace
+      .getConfiguration("codeScenario")
+      .get<boolean>("showReadStateIndicator", false);
+  }
 
   /**
    * Returns true when `item`'s file path matches the currently tracked active

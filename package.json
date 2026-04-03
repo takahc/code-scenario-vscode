@@ -123,6 +123,11 @@
           "type": "boolean",
           "default": false,
           "description": "Automatically reveal the first matching scenario item in the tree when the active editor changes. Reveal is debounced and does not steal focus or show a notification when no item matches."
+        },
+        "codeScenario.showReadStateIndicator": {
+          "type": "boolean",
+          "default": false,
+          "description": "When enabled, unread scenario item rows display their icon in a distinct color so that read and unread items are visually distinguishable at a glance. Has no effect when the item has a stale warning. Defaults to false."
         }
       }
     },

@@ -358,6 +358,26 @@ Auto-reveal is **off by default** to avoid disrupting the tree's scroll position
 state during normal editing. When enabled it is debounced (300 ms), does not steal keyboard
 focus, and shows no notification when no match is found.
 
+## Read State Indicator
+
+Set `codeScenario.showReadStateIndicator` to `true` to display a subtle color on the icon of
+unread scenario item rows, making it easy to see at a glance which items have not yet been
+opened.
+
+```json
+"codeScenario.showReadStateIndicator": true
+```
+
+- **Unread** items show their row icon tinted with the editor's info color (typically blue).
+- **Read** items keep the default icon color, providing a quiet contrast between the two states.
+- The indicator is **off by default** so existing workspaces are not affected unless explicitly
+  opted in.
+- Stale-warning items always display the warning icon regardless of this setting.
+- The active-file highlight (when the current editor file matches an item) also takes priority
+  over the unread tint.
+- Read state is toggled via **Mark as Read** / **Mark as Unread** in the item context menu,
+  or is set automatically when an item is opened via **Open Item**.
+
 ## Scenario Notes
 
 Each scenario can carry an optional free-text note or description. The note is stored with the
