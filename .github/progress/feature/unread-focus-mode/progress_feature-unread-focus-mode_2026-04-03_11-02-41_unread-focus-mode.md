@@ -5,7 +5,7 @@
 - Task: `unread-focus-mode`
 
 ## Summary
-Code Scenario の次の UX ループとして、未読項目だけに集中できる **Unread Focus Mode** を採用し、実装開始用の隔離 worktree とブランチを用意した。
+Code Scenario の次の UX ループとして進めた **Unread Focus Mode** は実装・検証・release 判定を完了し、`feature/unread-focus-mode` から `pre-release` への反映と preview 公開トリガーまで完了した。
 
 ## Why
 read/unread 状態、scenario 単位の progress、未読からの再開導線は揃ったが、ツリー自体は既読項目も常に全件表示のままで、項目数が増えるほど「次に読むべきもの」を視覚的に拾いづらい。read progress の価値を日常導線へ変えるには、残タスクだけを即座に見せる表示面の改善が必要だった。
@@ -31,13 +31,15 @@ Code Scenario ビューに表示フィルタとしての Unread Focus Mode を�
 - checker の再確認により、persisted off 化の blocker 自体は解消した一方、temporary reveal state が mode toggle まで残留し得るため「一時可視化」が十分に短命でない点が新たな release-blocking と判定された。
 - implementer により shared reveal helper の `finally` で temporary reveal state を解放する修正が入り、provider 側の punched-through 可視化寿命を reveal 処理に閉じ込めた。
 - 最終 checker により、temporary reveal state が後続 refresh へ持ち越されないことを確認し、残る「次回 refresh まで一時表示が見える場合がある」点は nice-to-have 扱いで出荷可能と判定された。
+- `feature/unread-focus-mode` は merge commit `d5d7f97`（`merge: feature/unread-focus-mode into pre-release`）で `pre-release` へ取り込まれた。
+- GitHub Actions `Publish Extension` run `#23931031040`（workflow run number `51`）は `pre-release` / head SHA `d5d7f97e165550411079de926b943cd4fa05b3dd` で成功し、preview 公開トリガーまで完了した。
 
 ## Uncompleted
-- コミット作成。
-- pre-release への反映と preview 公開。
+- 必要であれば、公開済み preview に対する任意の手動 E2E spot-check。
 
 ## Cautions
-本体 worktree の未追跡 `scripts/` は今回の作業対象外なので、新ブランチ作業へ混入させない。表示フィルタ導入では、親保持付きの階層フィルタと既存 reveal 系コマンドの相性が主な実装リスクになる。scenario progress 表示はフィルタ後件数ではなく全体件数ベースを維持する前提。最終 checker 判定では release-blocking は解消済みだが、revealed read item が即時 refresh なしでは次の通常 refresh まで見え続ける場合がある点は将来の磨き込み候補として残る。
+`npm run lint` は今回も ESLint 設定ファイル不在という既知の repo baseline のままで、Unread Focus Mode 固有の release blocker ではない。manual E2E を行う場合は、Unread Focus Mode の on/off、find/reveal 系導線、read/unread progress 表示の最終体験確認に留めればよい。
 
 ## Next Steps
-変更一式と progress を同じ論理単位でコミットし、pre-release フローで preview 公開まで進める。
+必要なら公開済み preview で手動 E2E を軽く実施する。
+その後は `pre-release` を基準に次の UX ループ候補を選定する。
