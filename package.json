@@ -36,6 +36,7 @@
       { "command": "code-scenario.addScenario", "title": "Add Scenario", "icon": "$(add)" },
       { "command": "code-scenario.deleteScenario", "title": "Delete Scenario", "icon": "$(trash)" },
       { "command": "code-scenario.renameScenario", "title": "Rename Scenario", "icon": "$(edit)" },
+      { "command": "code-scenario.resetScenarioVisitedState", "title": "Reset Visited State", "icon": "$(discard)" },
       { "command": "code-scenario.addItem", "title": "Add Item", "icon": "$(add)" },
       { "command": "code-scenario.addChildItem", "title": "Add Child Item", "icon": "$(add)" },
       { "command": "code-scenario.addItemBelow", "title": "Add Item Below", "icon": "$(arrow-down)" },
@@ -188,6 +189,11 @@
           "command": "code-scenario.startWalkthroughHere",
           "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
           "group": "3_walkthrough"
+        },
+        {
+          "command": "code-scenario.resetScenarioVisitedState",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
+          "group": "4_progress"
         },
         {
           "command": "code-scenario.editItem",
