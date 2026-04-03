@@ -63,7 +63,9 @@
       { "command": "code-scenario.nextItem", "title": "Next Scenario Item" },
       { "command": "code-scenario.previousItem", "title": "Previous Scenario Item" },
       { "command": "code-scenario.startWalkthroughHere", "title": "Start Walkthrough Here", "icon": "$(play)" },
-      { "command": "code-scenario.resumeFromFirstUnread", "title": "Resume from First Unread Item" }
+      { "command": "code-scenario.resumeFromFirstUnread", "title": "Resume from First Unread Item" },
+      { "command": "code-scenario.enableUnreadFocusMode", "title": "Enable Unread Focus Mode", "icon": "$(filter)" },
+      { "command": "code-scenario.disableUnreadFocusMode", "title": "Disable Unread Focus Mode", "icon": "$(close)" }
     ],
     "keybindings": [
       {
@@ -139,6 +141,16 @@
         {
           "command": "code-scenario.revealActiveFileInTree",
           "when": "view == codeScenarioView",
+          "group": "navigation"
+        },
+        {
+          "command": "code-scenario.enableUnreadFocusMode",
+          "when": "view == codeScenarioView && !codeScenario.unreadFocusModeEnabled",
+          "group": "navigation"
+        },
+        {
+          "command": "code-scenario.disableUnreadFocusMode",
+          "when": "view == codeScenarioView && codeScenario.unreadFocusModeEnabled",
           "group": "navigation"
         }
       ],
@@ -352,6 +364,14 @@
         {
           "command": "code-scenario.startWalkthroughHere",
           "when": "false"
+        },
+        {
+          "command": "code-scenario.enableUnreadFocusMode",
+          "when": "!codeScenario.unreadFocusModeEnabled"
+        },
+        {
+          "command": "code-scenario.disableUnreadFocusMode",
+          "when": "codeScenario.unreadFocusModeEnabled"
         }
       ]
     }

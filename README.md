@@ -180,6 +180,28 @@ Scenario items now keep a lightweight **read** state.
 Use **Reset Visited State** on a scenario row, or run it from the Command Palette, to clear the
 read state for all items in that scenario.
 
+### Unread Focus Mode
+
+Use **Unread Focus Mode** to temporarily filter the tree down to remaining unread work.
+
+- Shows unread items.
+- Keeps read ancestor items visible when they still contain unread descendants.
+- Hides read leaf items, fully read branches, and fully read scenarios.
+- Scenario progress labels still show the full scenario counts such as `3/12 read`.
+- If no unread items remain, the view shows a clear empty-state message instead of a blank tree.
+- The mode is persisted in workspace state across reloads and restarts.
+- Reveal flows can still temporarily surface a filtered-out read item for selection without turning
+  the mode off.
+
+### How to invoke
+
+| Method | Action |
+|---|---|
+| Tree toolbar | Click the **filter** icon to enable Unread Focus Mode |
+| Tree toolbar | Click the **close** icon to disable it |
+| Command Palette | `Enable Unread Focus Mode` |
+| Command Palette | `Disable Unread Focus Mode` |
+
 ## Keyboard Shortcuts
 
 The extension contributes the following default keyboard shortcuts for the most common workflows.
