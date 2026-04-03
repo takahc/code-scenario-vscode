@@ -46,6 +46,8 @@
       { "command": "code-scenario.clearQuickAddScenario", "title": "Clear Quick Add Scenario", "icon": "$(close)" },
       { "command": "code-scenario.manageQuickAddScenario", "title": "Manage Quick Add Target" },
       { "command": "code-scenario.openItem", "title": "Open Item", "icon": "$(go-to-file)" },
+      { "command": "code-scenario.markItemRead", "title": "Mark as Read", "icon": "$(pass)" },
+      { "command": "code-scenario.markItemUnread", "title": "Mark as Unread", "icon": "$(circle-large-outline)" },
       { "command": "code-scenario.renameItem", "title": "Rename Item" },
       { "command": "code-scenario.moveItem", "title": "Move Item..." },
       { "command": "code-scenario.copyItem", "title": "Copy Item..." },
@@ -203,12 +205,12 @@
         },
         {
           "command": "code-scenario.editItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "inline"
         },
         {
           "command": "code-scenario.deleteItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "inline"
         },
         {
@@ -218,63 +220,73 @@
         },
         {
           "command": "code-scenario.addChildItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "inline"
         },
         {
           "command": "code-scenario.addItemBelow",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "inline"
         },
         {
           "command": "code-scenario.openItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "inline"
         },
         {
           "command": "code-scenario.relinkItem",
-          "when": "view == codeScenarioView && viewItem == scenarioItemStale",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "inline"
         },
         {
           "command": "code-scenario.renameItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "1_modify"
         },
         {
           "command": "code-scenario.editItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "1_modify"
         },
         {
           "command": "code-scenario.quickEditItemNote",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "1_modify"
         },
         {
           "command": "code-scenario.addChildItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "2_add"
         },
         {
           "command": "code-scenario.addItemBelow",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
           "group": "2_add"
         },
         {
+          "command": "code-scenario.markItemRead",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemStaleUnread)",
+          "group": "3_progress"
+        },
+        {
+          "command": "code-scenario.markItemUnread",
+          "when": "view == codeScenarioView && (viewItem == scenarioItemRead || viewItem == scenarioItemStaleRead)",
+          "group": "3_progress"
+        },
+        {
           "command": "code-scenario.moveItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
-          "group": "3_modify"
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
+          "group": "4_modify"
         },
         {
           "command": "code-scenario.copyItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
-          "group": "3_modify"
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
+          "group": "4_modify"
         },
         {
           "command": "code-scenario.deleteItem",
-          "when": "view == codeScenarioView && (viewItem == scenarioItem || viewItem == scenarioItemStale)",
-          "group": "3_modify"
+          "when": "view == codeScenarioView && (viewItem == scenarioItemUnread || viewItem == scenarioItemRead || viewItem == scenarioItemStaleUnread || viewItem == scenarioItemStaleRead)",
+          "group": "4_modify"
         }
       ],
       "editor/context": [
@@ -303,6 +315,14 @@
         },
         {
           "command": "code-scenario.openItem",
+          "when": "false"
+        },
+        {
+          "command": "code-scenario.markItemRead",
+          "when": "false"
+        },
+        {
+          "command": "code-scenario.markItemUnread",
           "when": "false"
         },
         {

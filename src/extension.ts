@@ -238,6 +238,48 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.markItemRead",
+      async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Mark as Read is only available from an item context menu."
+          );
+          return;
+        }
+
+        const result = await provider.setItemVisited(node.scenarioId, node.data.id, true);
+        if (result === "notFound") {
+          await vscode.window.showWarningMessage(
+            `Item "${node.data.name}" was not found.`
+          );
+        }
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.markItemUnread",
+      async (node: ItemNode) => {
+        if (!(node instanceof ItemNode)) {
+          await vscode.window.showWarningMessage(
+            "Mark as Unread is only available from an item context menu."
+          );
+          return;
+        }
+
+        const result = await provider.setItemVisited(node.scenarioId, node.data.id, false);
+        if (result === "notFound") {
+          await vscode.window.showWarningMessage(
+            `Item "${node.data.name}" was not found.`
+          );
+        }
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.renameItem",
       async (node: ItemNode) => {
         if (!(node instanceof ItemNode)) {
