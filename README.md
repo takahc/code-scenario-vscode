@@ -141,6 +141,21 @@ depth-first order.
   the tree so walkthrough state continues from there.
 - If every item is already read, an informational message is shown and nothing changes.
 
+Use **Next Unread Scenario Item** and **Previous Unread Scenario Item** to skip already-read
+items while stepping through a walkthrough.
+
+- **Next Unread Scenario Item** — when a walkthrough position is active, jumps to the next
+  unread item *after* the current position within the same scenario (no wrap). When no position
+  is active it behaves like a quick start: opens the first unread item found across all scenarios
+  in scenario order. If no unread items exist anywhere, an informational message is shown.
+- **Previous Unread Scenario Item** — when a walkthrough position is active, jumps to the
+  nearest unread item *before* the current position within the same scenario (no wrap). When no
+  position is active an informational message advises using **Next Unread** to start instead.
+- Neither command wraps to another scenario; if no unread items remain in the target direction a
+  clear message including the scenario name is shown.
+- Successful navigation uses the same open / reveal / walkthrough-position-update path as
+  **Next Scenario Item**, so read-state and tree reveal behaviour stay consistent.
+
 The walkthrough position is persisted in workspace state across window reloads and restarts.
 When VS Code reopens a workspace where a walkthrough position was saved, a notification prompts
 you to **Resume** (continue from the saved item) or **Restart** (clear the saved position so the
@@ -155,8 +170,12 @@ next invocation starts fresh). Dismissing the notification keeps the saved posit
 | Tree inline action | Click the **▶** icon on a scenario row |
 | Keyboard | `Ctrl+Shift+Alt+]` — Next Scenario Item |
 | Keyboard | `Ctrl+Shift+Alt+[` — Previous Scenario Item |
+| Keyboard | `Ctrl+Shift+Alt+.` — Next Unread Scenario Item |
+| Keyboard | `Ctrl+Shift+Alt+,` — Previous Unread Scenario Item |
 | Command Palette | `Next Scenario Item` |
 | Command Palette | `Previous Scenario Item` |
+| Command Palette | `Next Unread Scenario Item` |
+| Command Palette | `Previous Unread Scenario Item` |
 | Command Palette | `Resume from First Unread Item` |
 
 **Start Walkthrough Here** resets the walkthrough position to the first item of the chosen
@@ -221,6 +240,8 @@ All bindings use the `Ctrl+Shift+Alt` chord prefix to avoid conflicts with VS Co
 | `Ctrl+Shift+Alt+E` | Reveal Active File in Scenarios | Editor focused |
 | `Ctrl+Shift+Alt+]` | Next Scenario Item | Global |
 | `Ctrl+Shift+Alt+[` | Previous Scenario Item | Global |
+| `Ctrl+Shift+Alt+.` | Next Unread Scenario Item | Global |
+| `Ctrl+Shift+Alt+,` | Previous Unread Scenario Item | Global |
 
 > **Tip — common editing flow:** Open a file, press `Ctrl+Shift+Alt+A` to bookmark it to a
 > scenario. Select a function or class name, then press `Ctrl+Shift+Alt+S` to bookmark that

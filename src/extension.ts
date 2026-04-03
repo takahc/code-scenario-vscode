@@ -1169,6 +1169,18 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand("code-scenario.nextUnreadItem", async () => {
+      await stepUnreadWalkthrough("next", walkthroughPosition, provider, treeView, setWalkthroughPosition);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("code-scenario.previousUnreadItem", async () => {
+      await stepUnreadWalkthrough("prev", walkthroughPosition, provider, treeView, setWalkthroughPosition);
+    })
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand(
       "code-scenario.startWalkthroughHere",
       async (node: ScenarioNode) => {
@@ -2262,4 +2274,98 @@ async function stepWalkthrough(
         : `Wrapped to the last item in "${label}".`;
     await vscode.window.showInformationMessage(msg);
   }
+}
+
+/**
+ * Steps forward (`"next"`) or backward (`"prev"`) through **unread** items only.
+ *
+ * - No position set + next: opens the first unread item across all scenarios in
+ *   scenario order (mirrors resume-first-unread but without a scenario picker).
+ * - No position set + prev: shows an informational message.
+ * - Position set: searches within the current scenario only; does not wrap.
+ */
+async function stepUnreadWalkthrough(
+  direction: "next" | "prev",
+  currentPosition: { scenarioId: string; itemId: string } | undefined,
+  provider: ScenarioProvider,
+  treeView: vscode.TreeView<TreeNode>,
+  setPosition: (pos: { scenarioId: string; itemId: string } | undefined) => void
+): Promise<void> {
+  // ── No walkthrough position active ──────────────────────────────────────────
+  if (!currentPosition) {
+    if (direction === "prev") {
+      await vscode.window.showInformationMessage(
+        "No walkthrough position is set. " +
+        "Use \"Next Unread Scenario Item\" to jump to the first unread item."
+      );
+      return;
+    }
+
+    // next: find first unread item across all scenarios in scenario order
+    const scenarios = provider.getScenarios();
+    for (const scenario of scenarios) {
+      const firstUnread = provider
+        .getFlatItemNodes(scenario.id)
+        .find((n) => !n.data.visited);
+      if (firstUnread) {
+        const opened = await activateWalkthroughItem(provider, firstUnread, treeView, setPosition);
+        if (!opened) { return; }
+        return;
+      }
+    }
+    await vscode.window.showInformationMessage(
+      "No unread items found across any scenario."
+    );
+    return;
+  }
+
+  // ── Walkthrough position is active: work within current scenario only ───────
+  const scenarioId = currentPosition.scenarioId;
+
+  // Guard: scenario may have been deleted since last step
+  if (!provider.getScenarioById(scenarioId)) {
+    setPosition(undefined);
+    await vscode.window.showInformationMessage(
+      "The previously active walkthrough scenario no longer exists. " +
+      "Invoke the command again to choose another scenario."
+    );
+    return;
+  }
+
+  const scenario = provider.getScenarioById(scenarioId)!;
+  const flatItems = provider.getFlatItemNodes(scenarioId);
+
+  if (flatItems.length === 0) {
+    setPosition(undefined);
+    await vscode.window.showInformationMessage(
+      `Scenario "${scenario.name}" has no items to walk through anymore. ` +
+      "Invoke the command again to choose another scenario."
+    );
+    return;
+  }
+
+  const currentIndex = flatItems.findIndex((n) => n.data.id === currentPosition.itemId);
+
+  let candidates: ItemNode[];
+  if (direction === "next") {
+    // Search from item after current (or from start if current not found)
+    const startIndex = currentIndex === -1 ? 0 : currentIndex + 1;
+    candidates = flatItems.slice(startIndex).filter((n) => !n.data.visited);
+  } else {
+    // Search from items before current (or entire list if current not found),
+    // reversed so the closest preceding unread item comes first
+    const endIndex = currentIndex === -1 ? flatItems.length : currentIndex;
+    candidates = flatItems.slice(0, endIndex).filter((n) => !n.data.visited).reverse();
+  }
+
+  if (candidates.length === 0) {
+    const dirLabel = direction === "next" ? "after the current position" : "before the current position";
+    await vscode.window.showInformationMessage(
+      `No unread items remain ${dirLabel} in scenario "${scenario.name}".`
+    );
+    return;
+  }
+
+  const opened = await activateWalkthroughItem(provider, candidates[0], treeView, setPosition);
+  if (!opened) { return; }
 }
