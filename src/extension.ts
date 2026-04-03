@@ -1200,6 +1200,23 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // ── Active-file indicator ─────────────────────────────────────
+  // Passively highlights matching tree items when their source file is the
+  // active editor. This never moves tree selection, scroll position, or focus.
+
+  function updateActiveFileIndicator(): void {
+    provider.setActiveFileReference(getActiveWorkspaceFileReference());
+  }
+
+  // Reflect any already-open editor at activation time.
+  updateActiveFileIndicator();
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      updateActiveFileIndicator();
+    })
+  );
+
   // ── Auto-heal renamed / moved files ──────────────────────────
 
   context.subscriptions.push(
