@@ -23,13 +23,15 @@ item 単位で Mark as Read / Mark as Unread を実行できるようにし、sc
 - 実装は既存の visited 永続化を再利用し、toggle 操作で editor を開かず walkthrough 位置も変更しない構成に揃えた。
 - `npm run compile` が成功した。
 - checker により、command/menu/provider の結線に release-blocking な問題がないこと、`Resume from First Unread Item` と既存 open 経路の visited 利用を壊していないことを確認した。
+- 変更一式を `feat: add item read toggles` としてコミットし、`feature/item-read-toggle` を origin へ push した。
+- 未追跡 `scripts/` を避けるため別 worktree を `origin/pre-release` から作成し、feature ブランチをマージしたうえで `npm ci` と `npm run compile` を通して `pre-release` へ push した。
+- GitHub Actions の `Publish Extension` workflow 実行 `#23930458650` が成功し、`Publish pre-release extension` ステップ完了と pre-release `0.1.50` の publish を確認した。
 
 ## Uncompleted
-- コミット作成。
-- pre-release への反映と preview 公開。
+- VS Code 拡張ホストでの手動 E2E 確認（実際の item 状態に応じたコンテキストメニュー表示、toggle 時に editor を開かないこと、walkthrough 位置が変わらないこと）。
 
 ## Cautions
-ワークツリーには今回タスク外の未追跡 `scripts/` が残っているため、コミットや release 作業へ混入させない。`npm run lint` は今回も ESLint 設定ファイル不在という repo baseline のため失敗シグナルとして使えない。UI レベルの手動 E2E（実際のコンテキストメニュー表示確認）は未実施のまま。
+ワークツリーには今回タスク外の未追跡 `scripts/` が残っているため、コミットや release 作業へ混入させない。`npm run lint` は今回も ESLint 設定ファイル不在という repo baseline のため失敗シグナルとして使えない。GitHub Actions では `actions/checkout@v4` / `actions/setup-node@v4` の Node.js 20 廃止予告 warning が継続している。UI レベルの手動 E2E（実際のコンテキストメニュー表示確認）は未実施のまま。
 
 ## Next Steps
-変更一式と progress を同じ論理単位でコミットし、pre-release フローで preview 公開まで進める。
+必要なら拡張ホストで item read toggle の手動 E2E を行い、別ループで GitHub Actions の Node.js 24 対応を進める。
