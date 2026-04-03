@@ -60,7 +60,8 @@
       { "command": "code-scenario.addFileFromExplorer", "title": "Add to Scenario..." },
       { "command": "code-scenario.nextItem", "title": "Next Scenario Item" },
       { "command": "code-scenario.previousItem", "title": "Previous Scenario Item" },
-      { "command": "code-scenario.startWalkthroughHere", "title": "Start Walkthrough Here", "icon": "$(play)" }
+      { "command": "code-scenario.startWalkthroughHere", "title": "Start Walkthrough Here", "icon": "$(play)" },
+      { "command": "code-scenario.resumeFromFirstUnread", "title": "Resume from First Unread Item" }
     ],
     "keybindings": [
       {
@@ -187,6 +188,11 @@
         },
         {
           "command": "code-scenario.startWalkthroughHere",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
+          "group": "3_walkthrough"
+        },
+        {
+          "command": "code-scenario.resumeFromFirstUnread",
           "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
           "group": "3_walkthrough"
         },

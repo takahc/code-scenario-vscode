@@ -131,6 +131,16 @@ one by one, in depth-first tree order.
 - After each step the item is opened in the editor (using the normal open behavior) and revealed
   and selected in the Code Scenario tree.
 
+Use **Resume from First Unread Item** to jump directly to the first unread item in that same
+depth-first order.
+
+- From a **scenario row**, it uses that scenario immediately.
+- From the **Command Palette**, it resolves the scenario the same way as walkthrough commands:
+  effective **Quick Add** target first, then the only scenario, otherwise a Quick Pick.
+- If an unread item exists, it is opened with the normal item-open flow and revealed/selected in
+  the tree so walkthrough state continues from there.
+- If every item is already read, an informational message is shown and nothing changes.
+
 The walkthrough position is persisted in workspace state across window reloads and restarts.
 When VS Code reopens a workspace where a walkthrough position was saved, a notification prompts
 you to **Resume** (continue from the saved item) or **Restart** (clear the saved position so the
@@ -141,11 +151,13 @@ next invocation starts fresh). Dismissing the notification keeps the saved posit
 | Method | Action |
 |---|---|
 | Tree context menu | Right-click a scenario row → **Start Walkthrough Here** |
+| Tree context menu | Right-click a scenario row → **Resume from First Unread Item** |
 | Tree inline action | Click the **▶** icon on a scenario row |
 | Keyboard | `Ctrl+Shift+Alt+]` — Next Scenario Item |
 | Keyboard | `Ctrl+Shift+Alt+[` — Previous Scenario Item |
 | Command Palette | `Next Scenario Item` |
 | Command Palette | `Previous Scenario Item` |
+| Command Palette | `Resume from First Unread Item` |
 
 **Start Walkthrough Here** resets the walkthrough position to the first item of the chosen
 scenario, opens that item, selects it in the tree, and shows a brief reminder of the next/previous
