@@ -169,6 +169,11 @@
           "group": "navigation"
         },
         {
+          "command": "code-scenario.nextUnreadItem",
+          "when": "view == codeScenarioView",
+          "group": "navigation"
+        },
+        {
           "command": "code-scenario.disableUnreadFocusMode",
           "when": "view == codeScenarioView && codeScenario.unreadFocusModeEnabled",
           "group": "navigation"
@@ -237,6 +242,11 @@
         },
         {
           "command": "code-scenario.resumeFromFirstUnread",
+          "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
+          "group": "3_walkthrough"
+        },
+        {
+          "command": "code-scenario.nextUnreadItem",
           "when": "view == codeScenarioView && (viewItem == scenario || viewItem == scenarioQuickAdd)",
           "group": "3_walkthrough"
         },

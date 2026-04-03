@@ -154,20 +154,32 @@ depth-first order.
   the tree so walkthrough state continues from there.
 - If every item is already read, an informational message is shown and nothing changes.
 
-Use **Next Unread Scenario Item** and **Previous Unread Scenario Item** to skip already-read
-items while stepping through a walkthrough.
+Use **Next Unread Scenario Item** to continue the remaining unread work in a scenario without
+stepping through items that are already read.
 
-- **Next Unread Scenario Item** — when a walkthrough position is active, jumps to the next
-  unread item *after* the current position within the same scenario (no wrap). When no position
-  is active it behaves like a quick start: opens the first unread item found across all scenarios
-  in scenario order. If no unread items exist anywhere, an informational message is shown.
+- From a **scenario row**, it uses that scenario immediately.
+- From the **Command Palette** or the **Scenarios** view title, it resolves the scenario the same
+  way as the normal walkthrough commands: effective **Quick Add** target first, then the only
+  scenario, otherwise a Quick Pick.
+- If the chosen scenario already has a walkthrough position, it jumps to the next unread item
+  *after* that position in depth-first order.
+- If the chosen scenario does not already have a walkthrough position, it opens the first unread
+  item in that scenario.
+- If no unread item exists after the current walkthrough position, it wraps to the first unread
+  item in the same scenario and shows a brief informational message.
+- If every item in the chosen scenario is already read, an informational message is shown and
+  nothing changes.
+- Successful navigation uses the same open / reveal / walkthrough-position-update path as
+  **Next Scenario Item**, so read-state and tree reveal behaviour stay consistent.
+
+Use **Previous Unread Scenario Item** to jump backward to the nearest unread item before the
+current walkthrough position.
+
 - **Previous Unread Scenario Item** — when a walkthrough position is active, jumps to the
   nearest unread item *before* the current position within the same scenario (no wrap). When no
   position is active an informational message advises using **Next Unread** to start instead.
 - Neither command wraps to another scenario; if no unread items remain in the target direction a
   clear message including the scenario name is shown.
-- Successful navigation uses the same open / reveal / walkthrough-position-update path as
-  **Next Scenario Item**, so read-state and tree reveal behaviour stay consistent.
 
 The walkthrough position is persisted in workspace state across window reloads and restarts.
 When VS Code reopens a workspace where a walkthrough position was saved, a notification prompts
@@ -180,7 +192,9 @@ next invocation starts fresh). Dismissing the notification keeps the saved posit
 |---|---|
 | Tree context menu | Right-click a scenario row → **Start Walkthrough Here** |
 | Tree context menu | Right-click a scenario row → **Resume from First Unread Item** |
+| Tree context menu | Right-click a scenario row → **Next Unread Scenario Item** |
 | Tree inline action | Click the **▶** icon on a scenario row |
+| Tree toolbar | **...** → **Next Unread Scenario Item** |
 | Keyboard | `Ctrl+Shift+Alt+]` — Next Scenario Item |
 | Keyboard | `Ctrl+Shift+Alt+[` — Previous Scenario Item |
 | Keyboard | `Ctrl+Shift+Alt+.` — Next Unread Scenario Item |
