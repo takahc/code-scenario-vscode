@@ -325,20 +325,37 @@ export class ScenarioProvider
     }
   }
 
-  async markItemVisited(scenarioId: string, itemId: string): Promise<void> {
+  async setItemVisited(
+    scenarioId: string,
+    itemId: string,
+    visited: boolean
+  ): Promise<"updated" | "noop" | "notFound"> {
     const scenario = this.scenarios.find((entry) => entry.id === scenarioId);
     if (!scenario) {
-      return;
+      return "notFound";
     }
 
     const item = findItemById(scenario.items, itemId);
-    if (!item || item.visited) {
-      return;
+    if (!item) {
+      return "notFound";
     }
 
-    item.visited = true;
+    if (Boolean(item.visited) === visited) {
+      return "noop";
+    }
+
+    item.visited = visited;
     await this.save();
     this.refresh();
+    return "updated";
+  }
+
+  async markItemVisited(scenarioId: string, itemId: string): Promise<void> {
+    await this.setItemVisited(scenarioId, itemId, true);
+  }
+
+  async markItemUnvisited(scenarioId: string, itemId: string): Promise<void> {
+    await this.setItemVisited(scenarioId, itemId, false);
   }
 
   async resetScenarioVisitedState(scenarioId: string): Promise<number | undefined> {
@@ -844,7 +861,7 @@ export class ScenarioProvider
           : vscode.TreeItemCollapsibleState.None
       );
       item.id = node.data.id;
-      item.contextValue = shouldUseWarningStyling(location) ? "scenarioItemStale" : "scenarioItem";
+      item.contextValue = getItemContextValue(node.data, location);
       const descriptionParts = [
         node.data.kind === "symbol" ? node.data.type : undefined,
         node.data.filePath,
@@ -1071,6 +1088,14 @@ function resetVisitedState(items: ScenarioItemData[]): number {
     item.visited = false;
     return total + selfCount + resetVisitedState(item.children);
   }, 0);
+}
+
+function getItemContextValue(
+  item: ScenarioItemData,
+  location: ScenarioItemLocationResolution
+): string {
+  const stalePrefix = shouldUseWarningStyling(location) ? "scenarioItemStale" : "scenarioItem";
+  return `${stalePrefix}${item.visited ? "Read" : "Unread"}`;
 }
 
 function resolveInsertionIndex<T extends { id: string }>(
