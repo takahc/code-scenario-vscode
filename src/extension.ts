@@ -1005,15 +1005,46 @@ export function activate(context: vscode.ExtensionContext): void {
         }
 
         const firstItem = flatItems[0];
-        setWalkthroughPosition({ scenarioId, itemId: firstItem.data.id });
-
-        await vscode.commands.executeCommand("code-scenario.openItem", firstItem);
-        await revealItemNode(treeView, firstItem);
+        const opened = await activateWalkthroughItem(
+          firstItem,
+          treeView,
+          setWalkthroughPosition
+        );
+        if (!opened) {
+          return;
+        }
 
         await vscode.window.showInformationMessage(
           `Walkthrough started: "${node.data.name}". ` +
           "Use Ctrl+Shift+Alt+] / Ctrl+Shift+Alt+[ to step forward and back."
         );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "code-scenario.resumeFromFirstUnread",
+      async (node?: ScenarioNode) => {
+        const scenario = node instanceof ScenarioNode
+          ? node.data
+          : await resolveWalkthroughScenario(provider);
+        if (!scenario) {
+          return;
+        }
+
+        const firstUnreadItem = provider
+          .getFlatItemNodes(scenario.id)
+          .find((itemNode) => !itemNode.data.visited);
+
+        if (!firstUnreadItem) {
+          await vscode.window.showInformationMessage(
+            `Scenario "${scenario.name}" has no unread items.`
+          );
+          return;
+        }
+
+        await activateWalkthroughItem(firstUnreadItem, treeView, setWalkthroughPosition);
       }
     )
   );
@@ -1082,12 +1113,12 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "code-scenario.openItem",
-      async (node: ItemNode) => {
+      async (node: ItemNode): Promise<boolean> => {
         if (!(node instanceof ItemNode)) {
           await vscode.window.showWarningMessage(
             "Open Item is only available from an item context menu."
           );
-          return;
+          return false;
         }
         const location = resolveScenarioItemLocation(node.data);
         if (location.status === "missing") {
@@ -1095,7 +1126,7 @@ export function activate(context: vscode.ExtensionContext): void {
             node,
             formatLocationMessage(location)
           );
-          return;
+          return false;
         }
 
         if (location.status === "ambiguous") {
@@ -1103,7 +1134,7 @@ export function activate(context: vscode.ExtensionContext): void {
             node,
             formatLocationMessage(location)
           );
-          return;
+          return false;
         }
 
         const uri = vscode.Uri.file(location.absolutePath);
@@ -1136,6 +1167,8 @@ export function activate(context: vscode.ExtensionContext): void {
             `Opened "${node.data.name}" using a fallback location because the symbol could not be resolved in "${node.data.filePath}".`
           );
         }
+
+        return true;
       }
     )
   );
@@ -1868,6 +1901,24 @@ async function showDeleteUndoNotification(
 
 // ── Sequential walkthrough helpers ───────────────────────────
 
+async function activateWalkthroughItem(
+  targetNode: ItemNode,
+  treeView: vscode.TreeView<TreeNode>,
+  setPosition: (pos: { scenarioId: string; itemId: string } | undefined) => void
+): Promise<boolean> {
+  const opened = await vscode.commands.executeCommand<boolean>(
+    "code-scenario.openItem",
+    targetNode
+  );
+  if (!opened) {
+    return false;
+  }
+
+  setPosition({ scenarioId: targetNode.scenarioId, itemId: targetNode.data.id });
+  await revealItemNode(treeView, targetNode);
+  return true;
+}
+
 /**
  * Resolves which scenario to use when no walkthrough position is active.
  * Uses the effective quick add target when available; otherwise prompts the
@@ -1978,12 +2029,10 @@ async function stepWalkthrough(
   }
 
   const targetNode = flatItems[nextIndex];
-  setPosition({ scenarioId, itemId: targetNode.data.id });
-
-  // Open the item using the existing open behavior.
-  await vscode.commands.executeCommand("code-scenario.openItem", targetNode);
-  // Reveal and select it in the tree.
-  await revealItemNode(treeView, targetNode);
+  const opened = await activateWalkthroughItem(targetNode, treeView, setPosition);
+  if (!opened) {
+    return;
+  }
 
   if (wrapped && flatItems.length > 1) {
     const scenario = provider.getScenarioById(scenarioId);
