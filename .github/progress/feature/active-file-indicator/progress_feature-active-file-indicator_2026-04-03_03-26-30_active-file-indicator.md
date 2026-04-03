@@ -23,13 +23,14 @@
 - README の **Reveal Active File in Scenarios** 節へ、active editor 中は一致 item が受動的に強調表示されることを追記した。
 - checker により `pre-release` との差分確認と TypeScript compile の成功を確認し、初期 editor 反映・editor 未選択時の解除・stale warning 優先・nested item 対応・既存 reveal/autoReveal 非干渉の観点で blocker なしと判定した。
 - checker からは、editor 切替ごとに full tree refresh が走る点と `workspaceFolderUri` optional 型が実運用では過剰な点が低優先の polish 候補として挙がった。
+- remote `pre-release` がローカル基準より進んでいることを確認し、feature branch を最新 `pre-release` へ載せ替えたうえで conflict を解消した。`ScenarioProvider` では unread focus 系の追加 state/method 群を保持しつつ active-file indicator を併存させる形で統合した。
+- rebased 後の worktree で `npm ci` を実行して依存を揃え、`npm run compile` 成功を再確認した。`npm run lint` は引き続き repo 既存の ESLint 設定不在により不成立だった。
 
 ## Uncompleted
-- コミット作成。
 - pre-release 反映と preview 公開。
 
 ## Cautions
 `feature/infinityuxloop` worktree には README / extension / progress の未コミット変更があり、今回のブランチへ混入させない。`pre-release` ベースには walkthrough/read-progress が無いので、それらに依存する UI 改善へ途中で逸れない。checker は lint 実行について repo 側の既存 ESLint 設定不備で成立しないことも確認しており、これは今回機能の回帰ではなく既存基盤の制約として扱う。active-file indicator 自体は full refresh ベースで成立しているため、大規模 tree での最適化は将来の磨き込み候補。
 
 ## Next Steps
-progress を feature ブランチ上の実装コミットと整合する形でコミットし、作業 tree を clean にしたうえで pre-release フローへ進める。
+最新 `pre-release` へ merge して push し、GitHub Actions の publish workflow が pre-release preview を起動することを確認する。
