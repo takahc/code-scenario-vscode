@@ -29,12 +29,15 @@ read 進捗と walkthrough が揃った現状を踏まえ、次の UX ループ�
 - 同じ walkthrough 経路で、`Start Walkthrough Here` や wrap 通知が open 失敗時にも成功風メッセージを出し得る追加の整合性課題が見つかった。
 - implementer により walkthrough helper を boolean 戻りへ変更し、`Start Walkthrough Here` の開始メッセージと wrap 通知を open 成功時だけ出すよう修正した。
 - checker 最終確認で feature-specific な問題なし、`npm run compile` 成功、`npm run lint` は ESLint 設定欠如による既知 baseline 失敗であることを確認した。
+- 変更一式を `feat: add unread walkthrough resume` としてコミットし、`feature/resume-unread-walkthrough` を origin へ push した。
+- 隔離 worktree を `origin/pre-release` から作成し、feature ブランチをマージしたうえで `npm ci` と `npm run compile` を通して `pre-release` へ push した。
+- GitHub Actions の `Publish Extension` workflow 実行 `#23930213515` が成功し、`Publish pre-release extension` ステップ完了と pre-release `0.1.49` の publish を確認した。
 
 ## Uncompleted
-- コミット、pre-release 反映、preview publish。
+- VS Code 拡張ホストでの手動 E2E 確認（Command Palette からの複数 scenario 選択や stale item を含むケース）。
 
 ## Cautions
-ワークツリーにはタスク外の未追跡 `scripts/` が残っているため、コミット対象へ混入させない。既存 walkthrough の resume/restart と read 状態更新を壊さないよう、`openItem` とシナリオ解決の既存経路を優先して再利用する。`npm run lint` はリポジトリに ESLint 設定ファイルが存在しないため baseline で失敗する。`openItem` 失敗時は walkthrough 位置だけでなく、成功/ wrap メッセージも出さないように揃えないと UX が曖昧になる。
+ワークツリーにはタスク外の未追跡 `scripts/` が残っているため、コミット対象へ混入させない。`npm run lint` はリポジトリに ESLint 設定ファイルが存在しないため baseline で失敗する。GitHub Actions では `actions/checkout@v4` / `actions/setup-node@v4` の Node.js 20 廃止予告 warning が出ており、今回の publish 自体は成功したが workflow メンテナンス課題として残る。
 
 ## Next Steps
-変更一式をコミットして feature ブランチを push し、その後 pre-release へ反映して preview publish を流す。
+必要なら拡張ホストで未読ジャンプ UX の手動 E2E を行い、別ループで GitHub Actions の Node.js 24 対応を進める。
