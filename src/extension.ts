@@ -1219,8 +1219,14 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("code-scenario.nextUnreadItem", async () => {
-      await stepUnreadWalkthrough("next", walkthroughPosition, provider, treeView, setWalkthroughPosition);
+    vscode.commands.registerCommand("code-scenario.nextUnreadItem", async (node?: ScenarioNode) => {
+      await stepNextUnreadWalkthrough(
+        node,
+        walkthroughPosition,
+        provider,
+        treeView,
+        setWalkthroughPosition
+      );
     })
   );
 
@@ -2342,6 +2348,76 @@ async function stepWalkthrough(
         ? `Wrapped to the first item in "${label}".`
         : `Wrapped to the last item in "${label}".`;
     await vscode.window.showInformationMessage(msg);
+  }
+}
+
+/**
+ * Steps forward through **unread** items in a chosen scenario.
+ *
+ * - Scenario row invocation uses that scenario directly.
+ * - Otherwise, scenario resolution matches the normal walkthrough command:
+ *   effective Quick Add target first, then the only scenario, otherwise prompt.
+ * - If the chosen scenario already has a walkthrough position, navigation starts
+ *   after that position and wraps to the first unread item when needed.
+ * - If the chosen scenario has no walkthrough position, navigation starts from
+ *   the first unread item in depth-first order.
+ */
+async function stepNextUnreadWalkthrough(
+  node: ScenarioNode | undefined,
+  currentPosition: { scenarioId: string; itemId: string } | undefined,
+  provider: ScenarioProvider,
+  treeView: vscode.TreeView<TreeNode>,
+  setPosition: (pos: { scenarioId: string; itemId: string } | undefined) => void
+): Promise<void> {
+  const scenario = node instanceof ScenarioNode
+    ? node.data
+    : await resolveWalkthroughScenario(provider);
+  if (!scenario) {
+    return;
+  }
+
+  const flatItems = provider.getFlatItemNodes(scenario.id);
+  const unreadItems = flatItems.filter((itemNode) => !itemNode.data.visited);
+
+  if (unreadItems.length === 0) {
+    await vscode.window.showInformationMessage(
+      `Scenario "${scenario.name}" has no unread items.`
+    );
+    return;
+  }
+
+  let targetNode = unreadItems[0];
+  let wrapped = false;
+
+  if (currentPosition?.scenarioId === scenario.id) {
+    const currentIndex = flatItems.findIndex((itemNode) => itemNode.data.id === currentPosition.itemId);
+    if (currentIndex !== -1) {
+      const nextUnread = flatItems
+        .slice(currentIndex + 1)
+        .find((itemNode) => !itemNode.data.visited);
+
+      if (nextUnread) {
+        targetNode = nextUnread;
+      } else {
+        wrapped = true;
+      }
+    }
+  }
+
+  const opened = await activateWalkthroughItem(
+    provider,
+    targetNode,
+    treeView,
+    setPosition
+  );
+  if (!opened) {
+    return;
+  }
+
+  if (wrapped) {
+    await vscode.window.showInformationMessage(
+      `Wrapped to the first unread item in "${scenario.name}".`
+    );
   }
 }
 
