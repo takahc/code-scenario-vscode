@@ -945,8 +945,7 @@ export function activate(context: vscode.ExtensionContext): void {
           return;
         }
 
-        await revealItemNode(provider, treeView, selected.match.node);
-        await vscode.commands.executeCommand("code-scenario.openItem", selected.match.node);
+        await revealItemNode(provider, treeView, selected.match.node, { ensureVisible: true });
       }
     )
   );
@@ -1937,10 +1936,14 @@ function formatStaleItemRepairDetail(match: StaleItemMatch): string {
 async function revealItemNode(
   provider: ScenarioProvider,
   treeView: vscode.TreeView<TreeNode>,
-  node: ItemNode
+  node: ItemNode,
+  options?: { ensureVisible?: boolean }
 ): Promise<void> {
   await provider.ensureItemVisible(node);
   try {
+    if (options?.ensureVisible) {
+      await vscode.commands.executeCommand("codeScenarioView.focus");
+    }
     await treeView.reveal(node, {
       select: true,
       focus: false,
