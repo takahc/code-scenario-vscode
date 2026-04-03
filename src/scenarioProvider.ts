@@ -213,11 +213,15 @@ export class ScenarioProvider
       itemNode
       && (this.temporaryRevealState.scenarioId !== itemNode.scenarioId
         || this.temporaryRevealState.targetItemId !== itemNode.data.id)
-    ) {
+      ) {
       return false;
     }
 
-    return this.clearTemporaryRevealState();
+    const cleared = this.clearTemporaryRevealState();
+    if (cleared) {
+      this.refresh();
+    }
+    return cleared;
   }
 
   isNodeVisible(node: TreeNode): boolean {
