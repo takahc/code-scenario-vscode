@@ -25,6 +25,8 @@ export interface ScenarioItemData {
   line: number;
   /** Optional free-text note attached to this item */
   note?: string;
+  /** Whether this item has been successfully opened */
+  visited?: boolean;
   /** Child items */
   children: ScenarioItemData[];
 }

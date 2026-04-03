@@ -325,6 +325,38 @@ export class ScenarioProvider
     }
   }
 
+  async markItemVisited(scenarioId: string, itemId: string): Promise<void> {
+    const scenario = this.scenarios.find((entry) => entry.id === scenarioId);
+    if (!scenario) {
+      return;
+    }
+
+    const item = findItemById(scenario.items, itemId);
+    if (!item || item.visited) {
+      return;
+    }
+
+    item.visited = true;
+    await this.save();
+    this.refresh();
+  }
+
+  async resetScenarioVisitedState(scenarioId: string): Promise<number | undefined> {
+    const scenario = this.scenarios.find((entry) => entry.id === scenarioId);
+    if (!scenario) {
+      return undefined;
+    }
+
+    const resetCount = resetVisitedState(scenario.items);
+    if (resetCount === 0) {
+      return 0;
+    }
+
+    await this.save();
+    this.refresh();
+    return resetCount;
+  }
+
   async deleteItem(scenarioId: string, itemId: string): Promise<string | undefined> {
     const scenario = this.scenarios.find((s) => s.id === scenarioId);
     if (!scenario) { return undefined; }
@@ -786,13 +818,14 @@ export class ScenarioProvider
       item.iconPath = staleCount > 0
         ? new vscode.ThemeIcon("warning", new vscode.ThemeColor("list.warningForeground"))
         : new vscode.ThemeIcon("list-unordered");
+      const visitedCount = countVisitedItems(node.data.items);
       item.description = [
-        formatCount(totalItemCount, "item"),
+        totalItemCount > 0 ? `${visitedCount}/${totalItemCount} read` : formatCount(totalItemCount, "item"),
         isQuickAddTarget ? "Quick Add" : undefined,
         staleCount > 0 ? `⚠ ${staleCount} stale` : undefined,
       ].filter(Boolean).join(" · ");
       item.tooltip = hasChildren
-        ? `${node.data.name}\n${formatCount(totalItemCount, "total item")} across ${formatCount(topLevelItemCount, "top-level item")}`
+        ? `${node.data.name}\n${visitedCount}/${totalItemCount} read across ${formatCount(topLevelItemCount, "top-level item")}`
         : `${node.data.name}\nNo items yet`;
       if (isQuickAddTarget) {
         item.tooltip = `${item.tooltip}\nQuick Add target for editor-driven adds`;
@@ -812,11 +845,14 @@ export class ScenarioProvider
       );
       item.id = node.data.id;
       item.contextValue = shouldUseWarningStyling(location) ? "scenarioItemStale" : "scenarioItem";
-      const typePrefix = node.data.kind === "symbol" ? `${node.data.type} · ` : "";
-      const noteSuffix = node.data.note ? " · ✎" : "";
-      item.description = hasChildren
-        ? `${typePrefix}${node.data.filePath} · ${formatCount(node.data.children.length, "child")}${noteSuffix}`
-        : `${typePrefix}${node.data.filePath}${noteSuffix}`;
+      const descriptionParts = [
+        node.data.kind === "symbol" ? node.data.type : undefined,
+        node.data.filePath,
+        hasChildren ? formatCount(node.data.children.length, "child") : undefined,
+        node.data.visited ? "read" : undefined,
+        node.data.note ? "✎" : undefined,
+      ].filter(Boolean);
+      item.description = descriptionParts.join(" · ");
       const actionHint = location.status === "resolved"
         ? "Click to open in the editor."
         : "Click to review file resolution or edit this item.";
@@ -824,6 +860,9 @@ export class ScenarioProvider
       item.tooltip = hasChildren
         ? `${node.data.name} (${node.data.type})\n${node.data.filePath}\n${formatCount(node.data.children.length, "child")}${noteSection}\n${actionHint}`
         : `${node.data.name} (${node.data.type})\n${node.data.filePath}${noteSection}\n${actionHint}`;
+      if (node.data.visited) {
+        item.tooltip = `${item.tooltip}\nRead`;
+      }
       item.iconPath = node.data.kind === "file"
         ? new vscode.ThemeIcon("file")
         : new vscode.ThemeIcon("symbol-function");
@@ -989,6 +1028,13 @@ function countStaleItems(items: ScenarioItemData[]): number {
   }, 0);
 }
 
+function countVisitedItems(items: ScenarioItemData[]): number {
+  return items.reduce(
+    (total, item) => total + (item.visited ? 1 : 0) + countVisitedItems(item.children),
+    0
+  );
+}
+
 function countNestedItems(items: ScenarioItemData[]): number {
   return items.reduce(
     (total, item) => total + 1 + countNestedItems(item.children),
@@ -1000,6 +1046,7 @@ function cloneItemWithFreshIds(item: ScenarioItemData): ScenarioItemData {
   return {
     ...item,
     id: generateId(),
+    visited: false,
     children: item.children.map((child) => cloneItemWithFreshIds(child)),
   };
 }
@@ -1016,6 +1063,14 @@ function cloneItem(item: ScenarioItemData): ScenarioItemData {
     ...item,
     children: item.children.map((child) => cloneItem(child)),
   };
+}
+
+function resetVisitedState(items: ScenarioItemData[]): number {
+  return items.reduce((total, item) => {
+    const selfCount = item.visited ? 1 : 0;
+    item.visited = false;
+    return total + selfCount + resetVisitedState(item.children);
+  }, 0);
 }
 
 function resolveInsertionIndex<T extends { id: string }>(

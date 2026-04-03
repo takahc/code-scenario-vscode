@@ -203,6 +203,41 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.resetScenarioVisitedState",
+      async (node?: ScenarioNode) => {
+        const scenario = await resolveScenarioSelection(provider, node, {
+          title: "Reset Visited State",
+          placeHolder: "Select a scenario to reset read progress",
+          emptyStateMessage: "Create a scenario before resetting visited state.",
+        });
+        if (!scenario) {
+          return;
+        }
+
+        const resetCount = await provider.resetScenarioVisitedState(scenario.id);
+        if (resetCount === undefined) {
+          await vscode.window.showWarningMessage(
+            `Scenario "${scenario.name}" was not found.`
+          );
+          return;
+        }
+
+        if (resetCount === 0) {
+          await vscode.window.showInformationMessage(
+            `Scenario "${scenario.name}" has no read items to reset.`
+          );
+          return;
+        }
+
+        await vscode.window.showInformationMessage(
+          `Reset read progress for "${scenario.name}".`
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.renameItem",
       async (node: ItemNode) => {
         if (!(node instanceof ItemNode)) {
@@ -1087,6 +1122,8 @@ export function activate(context: vscode.ExtensionContext): void {
           vscode.TextEditorRevealType.InCenter
         );
 
+        await provider.markItemVisited(node.scenarioId, node.data.id);
+
         if (lineResult.usedFallback) {
           await vscode.window.showWarningMessage(
             `Opened "${node.data.name}" using a fallback location because the symbol could not be resolved in "${node.data.filePath}".`
@@ -1341,6 +1378,32 @@ async function pickScenario(
   );
 
   return selectedScenario?.scenario;
+}
+
+async function resolveScenarioSelection(
+  provider: ScenarioProvider,
+  node: ScenarioNode | undefined,
+  options: {
+    title?: string;
+    placeHolder: string;
+    emptyStateMessage: string;
+  }
+): Promise<ScenarioData | undefined> {
+  if (node instanceof ScenarioNode) {
+    return node.data;
+  }
+
+  const scenarios = provider.getScenarios();
+  if (scenarios.length === 0) {
+    await vscode.window.showInformationMessage(options.emptyStateMessage);
+    return undefined;
+  }
+
+  if (scenarios.length === 1) {
+    return scenarios[0];
+  }
+
+  return pickScenario(scenarios, options);
 }
 
 function createQuickAddScenarioPicks(

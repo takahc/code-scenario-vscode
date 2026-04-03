@@ -151,6 +151,22 @@ next invocation starts fresh). Dismissing the notification keeps the saved posit
 scenario, opens that item, selects it in the tree, and shows a brief reminder of the next/previous
 shortcuts. If the scenario has no items an informational message is shown instead.
 
+## Read Progress
+
+Scenario items now keep a lightweight **read** state.
+
+- An item becomes **read** only after **Open Item** succeeds (including walkthrough/search flows that actually open it).
+- Reveal-only actions such as **Reveal Active File in Scenarios** do not mark items as read.
+- Item rows show a subtle `read` hint in the description column.
+- Scenario rows show progress such as `3/12 read`.
+- Copied items start unread; moved items keep their existing read state.
+- Undo restore keeps the item's prior read state.
+
+### Reset read progress
+
+Use **Reset Visited State** on a scenario row, or run it from the Command Palette, to clear the
+read state for all items in that scenario.
+
 ## Keyboard Shortcuts
 
 The extension contributes the following default keyboard shortcuts for the most common workflows.
