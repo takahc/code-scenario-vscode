@@ -25,13 +25,14 @@ item を実際に開いたときだけ既読として記録し、tree 上で sce
 - `npm run compile` が成功し、`git diff --check` でも問題がないことを確認した。
 - checker により、既読付与条件、reset、copy/move/undo の状態保持、README/package の配線に blocking issue がないことを確認した。
 - `npm run lint` は今回の変更とは無関係に ESLint 設定ファイル欠如で失敗する既存状態であることを再確認した。
+- 隔離 release worktree 上で `feature/item-visited` を最新 `origin/pre-release` にマージし、マージ結果でも `npm run compile` が通ることを確認した。
+- `pre-release` へ push し、GitHub Actions の Publish Extension workflow が成功した。`Publish pre-release extension` ステップまで完了し、pre-release `0.1.47` が公開された。
 
 ## Uncompleted
-- feature のコミット作成。
-- pre-release への反映と preview 公開。
+- 実機ベースの拡張ホスト操作確認。
 
 ## Cautions
 既読化は「実際に open に成功したケース」のみに限定し、reveal や search、失敗した open、stale な項目では状態を汚さないことが重要。自動テストや lint による補強はまだ弱く、`npm run lint` は repo 側の ESLint 設定不足で引き続き機能していない。
 
 ## Next Steps
-変更一式と progress を同じ論理単位でコミットし、その後 `pre-release` へ反映して preview 公開を進める。
+実機で read 付与の見え方と reset 導線の操作感を確認しつつ、次の UX ループ候補（scenario 内検索や read state の手動制御など）の優先度を再評価する。
