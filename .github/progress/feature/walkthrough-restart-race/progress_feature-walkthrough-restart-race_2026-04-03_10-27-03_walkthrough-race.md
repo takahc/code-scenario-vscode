@@ -21,13 +21,16 @@ checker により、起動時に保存済み walkthrough 位置の再開確認�
 - implementer により、起動時プロンプトの **Restart** 実行時に「現在の walkthrough 位置が起動時点の保存位置と一致している場合だけ消す」ガードを追加した。
 - `npm run compile` が成功し、TypeScript の診断エラーなく修正が通ることを確認した。
 - checker の再確認で、stale な起動時プロンプトが新しい walkthrough 位置を消せないこと、今回の blocker が解消したことを確認した。
+- fix を `fix: guard stale walkthrough restart prompt` としてコミットし、`feature/walkthrough-restart-race` を origin へ push した。
+- `origin/pre-release` から隔離 worktree を作成して fix をマージし、`npm ci` 後に `npm run compile` が通ることを確認して `pre-release` へ push した。
+- GitHub Actions の `Publish Extension` workflow 実行 `#23929788606` が成功し、`Publish pre-release extension` ステップ完了まで確認した。
+- workflow ログ上で pre-release `0.1.48` の publish を確認した。
 
 ## Uncompleted
-- この修正単位のコミットと push。
-- pre-release への反映と preview publish の確認。
+- 実機での手動 E2E（起動直後にプロンプトを残したまま walkthrough を開始・移動してから旧プロンプトの **Restart** を押すケース）の確認。
 
 ## Cautions
-ワークツリーには今回タスク外の未追跡 `scripts/` が存在するため、コミット対象へ混入させないよう注意する。`pre-release` は別 worktree で checkout 済みのため、ブランチ作成や比較は `origin/pre-release` 基準で扱う。
+ワークツリーには今回タスク外の未追跡 `scripts/` が存在するため、コミット対象へ混入させないよう注意する。`pre-release` は別 worktree で checkout 済みのため、ブランチ作成や比較は `origin/pre-release` 基準で扱った。GitHub Actions 実行時には Node.js 20 action の将来廃止に関する warning が出ており、今回の publish 自体は成功したが workflow メンテナンス課題として残る。
 
 ## Next Steps
-progress を含めて fix をコミットし、`pre-release` へ反映して preview publish が正常に流れるか確認する。
+必要なら VS Code 拡張ホストで race 再現手順を手動確認し、その後は Node.js 24 移行に向けた workflow action 更新を別ループで扱う。
