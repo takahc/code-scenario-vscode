@@ -28,6 +28,19 @@ scenario root or under another item as a new child. Copies preserve the stored i
 including notes, cached line, workspace binding, and stale-state-related path data, while assigning
 fresh internal IDs so the copied branch can be edited independently.
 
+## Duplicate Scenario
+
+Use **Duplicate Scenario** from a scenario row context menu (or the Command Palette) to create a full
+copy of a scenario as a new sibling immediately after the source scenario.
+
+- The duplicate keeps the same item tree structure, order, notes, cached line data, workspace
+  bindings, and other stored item metadata needed for normal behavior.
+- The duplicated scenario and every duplicated item receive fresh internal IDs.
+- All duplicated items start **unread**, even if the source scenario was already partially or fully
+  read.
+- The duplicate is revealed and selected in the tree after creation.
+- The current **Quick Add** target is left unchanged.
+
 
 
 Hover over any row in the Code Scenario sidebar to reveal action buttons directly on the row — no right-click needed.

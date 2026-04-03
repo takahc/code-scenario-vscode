@@ -195,6 +195,56 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.duplicateScenario",
+      async (node?: ScenarioNode) => {
+        const scenario = await resolveScenarioSelection(provider, node, {
+          title: "Duplicate Scenario",
+          placeHolder: "Select a scenario to duplicate",
+          emptyStateMessage: "Create a scenario before duplicating it.",
+        });
+        if (!scenario) {
+          return;
+        }
+
+        const defaultName = getDefaultDuplicateScenarioName(scenario.name);
+        const duplicatedName = await vscode.window.showInputBox({
+          title: "Duplicate Scenario",
+          prompt: "Enter name for duplicated scenario",
+          value: defaultName,
+          valueSelection: [0, defaultName.length],
+        });
+        if (!duplicatedName || !duplicatedName.trim()) {
+          return;
+        }
+
+        const result = await provider.duplicateScenario(scenario.id, duplicatedName.trim());
+        if (!result.ok) {
+          await vscode.window.showWarningMessage(result.reason);
+          return;
+        }
+
+        const duplicatedScenario = provider.getScenarioById(result.scenarioId);
+        if (duplicatedScenario) {
+          const hiddenByUnreadFocusMode = provider.isUnreadFocusModeEnabled()
+            && !provider.isNodeVisible(new ScenarioNode(duplicatedScenario));
+          if (!hiddenByUnreadFocusMode) {
+            await revealScenarioNode(treeView, duplicatedScenario);
+          }
+
+          await vscode.window.showInformationMessage(
+            hiddenByUnreadFocusMode
+              ? `Duplicated "${scenario.name}" as "${duplicatedName.trim()}". `
+                + "It is hidden because Unread Focus Mode only shows scenarios with unread items."
+              : `Duplicated "${scenario.name}" as "${duplicatedName.trim()}".`
+          );
+          return;
+        }
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.deleteScenario",
       async (node: ScenarioNode) => {
         const confirm = await vscode.window.showWarningMessage(
@@ -2106,6 +2156,25 @@ async function revealItemNode(
   } finally {
     provider.clearTemporaryRevealAfterUse(node);
   }
+}
+
+async function revealScenarioNode(
+  treeView: vscode.TreeView<TreeNode>,
+  scenario: ScenarioData
+): Promise<void> {
+  try {
+    await treeView.reveal(new ScenarioNode(scenario), {
+      select: true,
+      focus: false,
+      expand: false,
+    });
+  } catch {
+    // reveal can throw if the view is not visible; swallow silently
+  }
+}
+
+function getDefaultDuplicateScenarioName(name: string): string {
+  return `${name} Copy`;
 }
 
 async function showDeleteUndoNotification(

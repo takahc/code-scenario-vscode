@@ -46,6 +46,10 @@ export type CopyItemResult =
   | { ok: true; itemId: string }
   | { ok: false; reason: string };
 
+export type DuplicateScenarioResult =
+  | { ok: true; scenarioId: string }
+  | { ok: false; reason: string };
+
 interface DeletionPosition {
   index: number;
   previousSiblingId?: string;
@@ -315,6 +319,26 @@ export class ScenarioProvider
     this.scenarios.push(scenario);
     await this.save();
     this.refresh();
+  }
+
+  async duplicateScenario(
+    sourceScenarioId: string,
+    name: string
+  ): Promise<DuplicateScenarioResult> {
+    const sourceScenarioIndex = this.scenarios.findIndex((scenario) => scenario.id === sourceScenarioId);
+    if (sourceScenarioIndex === -1) {
+      return { ok: false, reason: "Scenario to duplicate was not found." };
+    }
+
+    const duplicatedScenario = cloneScenarioWithFreshIds(
+      this.scenarios[sourceScenarioIndex],
+      name
+    );
+    this.scenarios.splice(sourceScenarioIndex + 1, 0, duplicatedScenario);
+
+    await this.save();
+    this.refresh();
+    return { ok: true, scenarioId: duplicatedScenario.id };
   }
 
   async deleteScenario(scenarioId: string): Promise<string | undefined> {
@@ -1396,6 +1420,15 @@ function cloneItemWithFreshIds(item: ScenarioItemData): ScenarioItemData {
     id: generateId(),
     visited: false,
     children: item.children.map((child) => cloneItemWithFreshIds(child)),
+  };
+}
+
+function cloneScenarioWithFreshIds(scenario: ScenarioData, name: string): ScenarioData {
+  return {
+    ...scenario,
+    id: generateId(),
+    name,
+    items: scenario.items.map((item) => cloneItemWithFreshIds(item)),
   };
 }
 
