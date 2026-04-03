@@ -213,7 +213,7 @@ export class ScenarioProvider
       itemNode
       && (this.temporaryRevealState.scenarioId !== itemNode.scenarioId
         || this.temporaryRevealState.targetItemId !== itemNode.data.id)
-    ) {
+      ) {
       return false;
     }
 
