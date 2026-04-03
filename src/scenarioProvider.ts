@@ -204,7 +204,11 @@ export class ScenarioProvider
       return false;
     }
 
-    return this.clearTemporaryRevealState();
+    const cleared = this.clearTemporaryRevealState();
+    if (cleared) {
+      this.refresh();
+    }
+    return cleared;
   }
 
   isNodeVisible(node: TreeNode): boolean {

@@ -30,14 +30,17 @@ Code Scenario ビューに表示フィルタとしての Unread Focus Mode を�
 - implementer により provider 中央で temporary reveal path を持つ方式へ修正し、README も「mode を off にせず一時可視化する」説明へ更新した。
 - checker の再確認により、persisted off 化の blocker 自体は解消した一方、temporary reveal state が mode toggle まで残留し得るため「一時可視化」が十分に短命でない点が新たな release-blocking と判定された。
 - implementer により shared reveal helper の `finally` で temporary reveal state を解放する修正が入り、provider 側の punched-through 可視化寿命を reveal 処理に閉じ込めた。
-- 最終 checker により、temporary reveal state が後続 refresh へ持ち越されないことを確認し、残る「次回 refresh まで一時表示が見える場合がある」点は nice-to-have 扱いで出荷可能と判定された。
+- checker によりその後も、Find / Reveal Active File / stale repair / walkthrough 系の reveal 後に read item が次回 refresh まで可視のまま残る点が release-blocking として再報告された。
+- implementer により `clearTemporaryRevealAfterUse()` で temporary reveal state 解放時に provider refresh も発火するよう修正し、reveal 完了直後に Unread Focus Mode の filtered UI を復元するようにした。
+- checker の最終再確認により、temporary reveal cleanup 後に provider refresh が走ることで read item の居残りが解消し、reveal 動作・mode toggle・read state 永続化への回帰も見当たらないため release-ready と判定された。
+- root worktree 側でも `npm run compile` は成功し、`npm run lint` は ESLint 設定ファイル不在という既知 baseline のまま失敗することを再確認した。
 
 ## Uncompleted
 - コミット作成。
 - pre-release への反映と preview 公開。
 
 ## Cautions
-本体 worktree の未追跡 `scripts/` は今回の作業対象外なので、新ブランチ作業へ混入させない。表示フィルタ導入では、親保持付きの階層フィルタと既存 reveal 系コマンドの相性が主な実装リスクになる。scenario progress 表示はフィルタ後件数ではなく全体件数ベースを維持する前提。最終 checker 判定では release-blocking は解消済みだが、revealed read item が即時 refresh なしでは次の通常 refresh まで見え続ける場合がある点は将来の磨き込み候補として残る。
+本体 worktree の未追跡 `scripts/` と別 feature の progress は今回の作業対象外なので、commit や pre-release merge に混入させない。表示フィルタ導入では、親保持付きの階層フィルタと既存 reveal 系コマンドの相性が主な実装リスクだったが、今回の release 判定は temporary reveal cleanup の即時 refresh までを対象にしている。手元 lint は ESLint 設定ファイル不在の repo baseline で失敗するため、compile と checker 判断を主な出荷根拠として扱う。
 
 ## Next Steps
-変更一式と progress を同じ論理単位でコミットし、pre-release フローで preview 公開まで進める。
+変更一式と progress を同じ論理単位でコミットし、clean な pre-release 用 worktree で merge と preview 公開を進める。
