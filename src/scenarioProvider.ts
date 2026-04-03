@@ -471,6 +471,22 @@ export class ScenarioProvider
     return resetCount;
   }
 
+  async markAllScenarioItemsRead(scenarioId: string): Promise<number | undefined> {
+    const scenario = this.scenarios.find((entry) => entry.id === scenarioId);
+    if (!scenario) {
+      return undefined;
+    }
+
+    const markedCount = markAllVisited(scenario.items);
+    if (markedCount === 0) {
+      return 0;
+    }
+
+    await this.save();
+    this.refresh();
+    return markedCount;
+  }
+
   async deleteItem(scenarioId: string, itemId: string): Promise<string | undefined> {
     const scenario = this.scenarios.find((s) => s.id === scenarioId);
     if (!scenario) { return undefined; }
@@ -1322,6 +1338,14 @@ function resetVisitedState(items: ScenarioItemData[]): number {
     const selfCount = item.visited ? 1 : 0;
     item.visited = false;
     return total + selfCount + resetVisitedState(item.children);
+  }, 0);
+}
+
+function markAllVisited(items: ScenarioItemData[]): number {
+  return items.reduce((total, item) => {
+    const selfCount = item.visited ? 0 : 1;
+    item.visited = true;
+    return total + selfCount + markAllVisited(item.children);
   }, 0);
 }
 

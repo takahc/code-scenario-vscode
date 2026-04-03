@@ -268,6 +268,41 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
+      "code-scenario.markAllScenarioItemsRead",
+      async (node?: ScenarioNode) => {
+        const scenario = await resolveScenarioSelection(provider, node, {
+          title: "Mark All as Read",
+          placeHolder: "Select a scenario to mark all items as read",
+          emptyStateMessage: "Create a scenario before marking items as read.",
+        });
+        if (!scenario) {
+          return;
+        }
+
+        const markedCount = await provider.markAllScenarioItemsRead(scenario.id);
+        if (markedCount === undefined) {
+          await vscode.window.showWarningMessage(
+            `Scenario "${scenario.name}" was not found.`
+          );
+          return;
+        }
+
+        if (markedCount === 0) {
+          await vscode.window.showInformationMessage(
+            `All items in "${scenario.name}" are already marked as read.`
+          );
+          return;
+        }
+
+        await vscode.window.showInformationMessage(
+          `Marked ${markedCount} ${markedCount === 1 ? "item" : "items"} as read in "${scenario.name}".`
+        );
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
       "code-scenario.markItemRead",
       async (node: ItemNode) => {
         if (!(node instanceof ItemNode)) {

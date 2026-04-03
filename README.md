@@ -180,6 +180,10 @@ Scenario items now keep a lightweight **read** state.
 Use **Reset Visited State** on a scenario row, or run it from the Command Palette, to clear the
 read state for all items in that scenario.
 
+Use **Mark All as Read** on a scenario row, or run it from the Command Palette, to mark every item
+in that scenario as read in one step. This is the symmetric counterpart to Reset Visited State and
+is a no-op when all items are already read.
+
 ### Unread Focus Mode
 
 Use **Unread Focus Mode** to temporarily filter the tree down to remaining unread work.
