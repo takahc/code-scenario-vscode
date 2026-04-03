@@ -961,7 +961,14 @@ export function activate(context: vscode.ExtensionContext): void {
           "Restart"
         );
         if (action === "Restart") {
-          setWalkthroughPosition(undefined);
+          // Only clear if the position hasn't been updated by another command
+          // while the prompt was open (e.g. startWalkthroughHere, nextItem).
+          if (
+            walkthroughPosition?.scenarioId === savedPos.scenarioId &&
+            walkthroughPosition?.itemId === savedPos.itemId
+          ) {
+            setWalkthroughPosition(undefined);
+          }
         }
         // "Resume" keeps the persisted position; dismiss also keeps it.
       })();
