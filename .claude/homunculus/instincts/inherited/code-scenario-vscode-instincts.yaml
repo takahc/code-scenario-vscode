@@ -1,0 +1,478 @@
+# Instincts generated from https://github.com/takahc/code-scenario-vscode
+# Generated: 2026-04-02T11:51:26.278Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: code-scenario-vscode-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, chore, docs, refactor
+
+## Evidence
+
+- 18 commits analyzed
+- Detected conventional commit pattern
+- Examples: chore: require pre-release in pm loops, docs: add pre-release workflow skill
+
+---
+id: code-scenario-vscode-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Commit Length
+
+## Action
+
+Keep commit messages concise (~42 characters)
+
+## Evidence
+
+- Average commit message length: 42 chars
+- Based on 18 commits
+
+---
+id: code-scenario-vscode-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: code-scenario-vscode-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: code-scenario-vscode-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: code-scenario-vscode-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: code-scenario-vscode-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~18x per month
+- Files: src/*
+
+---
+id: code-scenario-vscode-workflow-feature-development-with-progress-tracking
+trigger: "when doing feature development with progress tracking"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Workflow Feature Development With Progress Tracking
+
+## Action
+
+Follow the feature-development-with-progress-tracking workflow:
+1. Implement or update feature code in src/ files and package.json
+2. Create or update .github/progress/feature/... progress markdown files describing feature steps
+3. Update or add .github/skills/.../SKILL.md to document new skills or workflows
+4. Optionally update .github/copilot-instructions.md for commit guidance
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: src/extension.ts, src/itemEditorPanel.ts, src/scenarioModel.ts
+
+---
+id: code-scenario-vscode-workflow-agent-orchestration-and-prompt-workflow-update
+trigger: "when doing agent orchestration and prompt workflow update"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Workflow Agent Orchestration And Prompt Workflow Update
+
+## Action
+
+Follow the agent-orchestration-and-prompt-workflow-update workflow:
+1. Update or add .github/agents/*.agent.md files for new or changed agents
+2. Update or add .github/prompts/*.prompt.md files for new or changed prompts
+3. Update related .github/progress/agents/orchestration/*.md progress documentation
+4. Optionally update .github/instructions/*.instructions.md
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: .github/agents/*.agent.md, .github/prompts/*.prompt.md, .github/progress/agents/orchestration/*.md
+
+---
+id: code-scenario-vscode-workflow-commit-workflow-guidance-documentation
+trigger: "when doing commit workflow guidance documentation"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Workflow Commit Workflow Guidance Documentation
+
+## Action
+
+Follow the commit-workflow-guidance-documentation workflow:
+1. Update .github/copilot-instructions.md with new or revised commit instructions
+2. Add or update .github/progress/feature-enhance-ux/progress_feature-enhance-ux_*_commit-workflow-guidance.md
+3. Update or add .github/skills/commit/SKILL.md
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: .github/copilot-instructions.md, .github/progress/feature-enhance-ux/progress_feature-enhance-ux_*_commit-workflow-guidance.md, .github/skills/commit/SKILL.md
+
+---
+id: code-scenario-vscode-instinct-file-naming
+trigger: "When creating or renaming files in the repository"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct File Naming
+
+## Action
+
+Use camelCase for file names
+
+## Evidence
+
+- Pattern in namingConventions.files
+- Seen in src/itemEditorPanel.ts
+
+---
+id: code-scenario-vscode-instinct-function-naming
+trigger: "When defining new functions"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Function Naming
+
+## Action
+
+Use camelCase for function names
+
+## Evidence
+
+- Pattern in namingConventions.functions
+
+---
+id: code-scenario-vscode-instinct-class-naming
+trigger: "When defining new classes"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Class Naming
+
+## Action
+
+Use PascalCase for class names
+
+## Evidence
+
+- Pattern in namingConventions.classes
+
+---
+id: code-scenario-vscode-instinct-constant-naming
+trigger: "When declaring constants"
+confidence: 0.85
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Constant Naming
+
+## Action
+
+Use SCREAMING_SNAKE_CASE for constant names
+
+## Evidence
+
+- Pattern in namingConventions.constants
+
+---
+id: code-scenario-vscode-instinct-import-style
+trigger: "When importing modules within the codebase"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Import Style
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Pattern in importStyle
+- Seen in src/extension.ts
+
+---
+id: code-scenario-vscode-instinct-export-style
+trigger: "When exporting modules or functions"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Export Style
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in exportStyle
+
+---
+id: code-scenario-vscode-instinct-try-catch-error-handling
+trigger: "When handling errors in code"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Try Catch Error Handling
+
+## Action
+
+Use try-catch blocks for error handling
+
+## Evidence
+
+- Pattern in errorHandling.style
+
+---
+id: code-scenario-vscode-instinct-git-commit-format
+trigger: "When making a git commit"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Git Commit Format
+
+## Action
+
+Use Conventional Commits format with prefixes: feat, chore, docs, refactor
+
+## Evidence
+
+- Pattern in commits.prefixes
+- Seen in commit 'feat: improve scenario item editing ux'
+
+---
+id: code-scenario-vscode-instinct-git-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Git Commit Length
+
+## Action
+
+Keep commit messages concise (average length ~42 characters)
+
+## Evidence
+
+- Pattern in commits.averageLength
+
+---
+id: code-scenario-vscode-instinct-feature-development-with-progress
+trigger: "When adding a new feature and tracking/documenting its development process"
+confidence: 0.92
+domain: workflow
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Feature Development With Progress
+
+## Action
+
+Implement feature code in src/, update package.json, create or update .github/progress/feature/... progress markdown files, update or add .github/skills/.../SKILL.md, and optionally update .github/copilot-instructions.md
+
+## Evidence
+
+- Workflow: feature-development-with-progress-tracking
+- Seen in commits and files for enhance-ux feature
+
+---
+id: code-scenario-vscode-instinct-agent-orchestration-workflow
+trigger: "When introducing or modifying agent orchestration workflows and prompts"
+confidence: 0.87
+domain: workflow
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Agent Orchestration Workflow
+
+## Action
+
+Update or add .github/agents/*.agent.md, .github/prompts/*.prompt.md, .github/progress/agents/orchestration/*.md, and optionally .github/instructions/*.instructions.md
+
+## Evidence
+
+- Workflow: agent-orchestration-and-prompt-workflow-update
+- Seen in agent and prompt documentation updates
+
+---
+id: code-scenario-vscode-instinct-commit-workflow-guidance
+trigger: "When clarifying or adding instructions for the commit workflow"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Commit Workflow Guidance
+
+## Action
+
+Update .github/copilot-instructions.md, add or update .github/progress/feature-enhance-ux/progress_feature-enhance-ux_*_commit-workflow-guidance.md, and update or add .github/skills/commit/SKILL.md
+
+## Evidence
+
+- Workflow: commit-workflow-guidance-documentation
+- Seen in commit workflow documentation files
+
+---
+id: code-scenario-vscode-instinct-testing-location
+trigger: "When adding or organizing tests"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: takahc/code-scenario-vscode
+---
+
+# Code Scenario Vscode Instinct Testing Location
+
+## Action
+
+Place tests in a separate directory from src/
+
+## Evidence
+
+- Pattern in architecture.testLocation
+
